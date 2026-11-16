@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>治癒系像素小精靈與許願樽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(160deg, #FDF8F5 0%, #F6F2FA 48%, #EEF6FA 100%);
+      color: #5C546A;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* 像素畫布銳利化渲染 */
+    .pixel-canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* 馬卡龍柔邊卡片 */
+    .pastel-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      border: 2px solid #EFE6F4;
+      box-shadow: 0 10px 28px rgba(168, 148, 184, 0.14);
+      border-radius: 26px;
+    }
+
+    /* 馬卡龍立體按鈕 */
+    .pastel-btn {
+      transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, background-color 0.2s ease;
+      box-shadow: 0 4px 0 rgba(169, 152, 184, 0.28);
+    }
+    .pastel-btn:hover {
+      transform: translateY(-2px);
+    }
+    .pastel-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(169, 152, 184, 0.28);
+    }
+
+    /* 小精靈首頁卡片自然輕微浮動 */
+    @keyframes homeSpiritFloat {
+      0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+      33% { transform: translate(-2px, -6px) rotate(-1.5deg); }
+      66% { transform: translate(2px, -8px) rotate(1.5deg); }
+    }
+    .home-spirit-float {
+      animation: homeSpiritFloat 3.8s ease-in-out infinite;
+    }
+
+    /* 小精靈被摸摸或點擊時的 Q 彈回饋 */
+    @keyframes spiritSquish {
+      0%   { transform: scale(1, 1); }
+      28%  { transform: scale(1.16, 0.86); }
+      56%  { transform: scale(0.92, 1.12); }
+      80%  { transform: scale(1.04, 0.97); }
+      100% { transform: scale(1, 1); }
+    }
+    .spirit-squish {
+      animation: spiritSquish 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 偶發可愛動作：轉圈、跳舞搖擺、唱歌歡躍 */
+    @keyframes spiritSpinAction {
+      0%   { transform: rotate(0deg) scale(1); }
+      45%  { transform: rotate(190deg) scale(1.1); }
+      85%  { transform: rotate(350deg) scale(1.03); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .spirit-spin {
+      animation: spiritSpinAction 1.05s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes spiritDanceAction {
+      0%, 100% { transform: rotate(0deg) translateY(0); }
+      20%  { transform: rotate(-11deg) translateY(-5px) scale(1.03, 0.97); }
+      40%  { transform: rotate(11deg) translateY(-2px) scale(0.97, 1.03); }
+      60%  { transform: rotate(-9deg) translateY(-6px) scale(1.03, 0.97); }
+      80%  { transform: rotate(9deg) translateY(-2px) scale(0.97, 1.03); }
+    }
+    .spirit-dance {
+      animation: spiritDanceAction 1.1s ease-in-out;
+    }
+
+    @keyframes spiritSingAction {
+      0%, 100% { transform: scale(1, 1) translateY(0); }
+      25%  { transform: scale(0.94, 1.08) translateY(-8px); }
+      50%  { transform: scale(1.06, 0.95) translateY(-3px); }
+      75%  { transform: scale(0.95, 1.07) translateY(-7px); }
+    }
+    .spirit-sing {
+      animation: spiritSingAction 1.15s ease-in-out;
+    }
+
+    /* 氣泡對話框彈出動畫 */
+    @keyframes bubblePop {
+      0%   { opacity: 0; transform: translateY(8px) scale(0.92); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .bubble-pop {
+      animation: bubblePop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* ==================== 便條紙樣式庫 (日常款 + 6款柔和色系特殊背景紙) ==================== */
+    .star-memo-paper {
+      background-color: #FFFDF5;
+      background-image:
+        radial-gradient(#F5E0AE 1.2px, transparent 1.2px),
+        radial-gradient(#F3D5E8 1.2px, #FFFDF5 1.2px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+      border: 3px solid #F2DEC0;
+      box-shadow: 0 14px 34px rgba(154, 132, 168, 0.2);
+      position: relative;
+    }
+
+    .rainbow-memo-paper {
+      background: linear-gradient(135deg,
+        #FFF0F6 0%,
+        #FFF8E6 25%,
+        #F1FCF3 50%,
+        #EEF7FF 75%,
+        #F7EFFF 100%
+      );
+      border: 3px solid #F2C6DF;
+      box-shadow: 0 14px 36px rgba(206, 152, 196, 0.24);
+      position: relative;
+    }
+
+    .clover-memo-paper {
+      background: linear-gradient(145deg,
+        #F4FEF7 0%,
+        #E4F9EC 52%,
+        #D5F2E2 100%
+      );
+      border: 3px solid #A9DEC0;
+      box-shadow: 0 14px 36px rgba(122, 188, 150, 0.24);
+      position: relative;
+    }
+
+    .lavender-memo-paper {
+      background: linear-gradient(135deg,
+        #F9F6FF 0%,
+        #EFEAFF 52%,
+        #E4DCFA 100%
+      );
+      border: 3px solid #D4C4F0;
+      box-shadow: 0 14px 36px rgba(162, 142, 204, 0.24);
+      position: relative;
+    }
+
+    .apricot-memo-paper {
+      background: linear-gradient(135deg,
+        #FFF7F2 0%,
+        #FFECE3 52%,
+        #FFE0D4 100%
+      );
+      border: 3px solid #F7C8B6;
+      box-shadow: 0 14px 36px rgba(214, 158, 138, 0.24);
+      position: relative;
+    }
+
+    .sakura-memo-paper {
+      background: linear-gradient(135deg,
+        #FFF5F8 0%,
+        #FFE8F0 52%,
+        #FFDCE7 100%
+      );
+      border: 3px solid #F5BED2;
+      box-shadow: 0 14px 36px rgba(214, 145, 172, 0.24);
+      position: relative;
+    }
+
+    .mint-memo-paper {
+      background: linear-gradient(135deg,
+        #F2FCFD 0%,
+        #E2F7F9 52%,
+        #D1F0F4 100%
+      );
+      border: 3px solid #A8DFE6;
+      box-shadow: 0 14px 36px rgba(125, 185, 196, 0.24);
+      position: relative;
+    }
+
+    /* 暗花浮水印容器 */
+    .memo-watermark-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.36;
+      overflow: hidden;
+      border-radius: inherit;
+    }
+
+    /* 便條紙按下確定儲存時：捲起縮小速度減慢兩倍 (0.76s) */
+    @keyframes paperRollUp {
+      0%   { transform: scale(1, 1) rotate(0deg); opacity: 1; }
+      60%  { transform: scale(0.88, 0.24) rotate(-3deg); opacity: 0.95; }
+      100% { transform: scale(0.25, 0.14) rotate(-8deg); opacity: 0; }
+    }
+    .paper-rolling-up {
+      animation: paperRollUp 0.76s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+    }
+
+    /* 漂浮愛心、星星與音符粒子 */
+    @keyframes particleRise {
+      0%   { opacity: 1; transform: translate(0, 0) scale(0.85); }
+      100% { opacity: 0; transform: translate(var(--tx), -76px) scale(1.25); }
+    }
+    .floating-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 60;
+      animation: particleRise 0.95s ease-out forwards;
+    }
+
+    /* 精緻捲軸 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F6F1FA;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #DFD2EA;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between min-h-[100dvh] relative">
+
+  <!-- 背景柔和像素雲朵與星點裝飾 -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-65">
+    <div class="absolute top-12 left-6 w-24 h-8 bg-white/75 rounded-full blur-[1px]"></div>
+    <div class="absolute top-24 right-10 w-32 h-9 bg-[#FFF6FB]/85 rounded-full blur-[1px]"></div>
+    <div class="absolute bottom-28 left-8 w-28 h-8 bg-[#F2FAFF]/85 rounded-full blur-[1px]"></div>
+    <span class="absolute top-1/4 left-1/4 text-[#F3D299] text-sm">✦</span>
+    <span class="absolute top-1/3 right-1/4 text-[#E6B8D9] text-xs">✧</span>
+    <span class="absolute bottom-1/3 left-1/3 text-[#B8DFEA] text-sm">✦</span>
+  </div>
+
+  <!-- ==================== 頂部狀態列：置中「治癒屋」與每日雙打卡進度 ==================== -->
+  <header class="relative z-20 w-full max-w-3xl mx-auto px-4 pt-3 pb-1 flex flex-col sm:flex-row items-center justify-between gap-2">
+    <div class="hidden sm:block w-36"></div>
+
+    <!-- 置頂治癒屋 -->
+    <div class="flex items-center gap-2 bg-white/85 backdrop-blur-sm border border-[#EFE6F4] rounded-2xl px-4 py-1.5 shadow-xs">
+      <span class="text-base">✨</span>
+      <span class="font-bold text-sm tracking-wide text-[#6B627A]">治癒屋</span>
+    </div>
+
+    <!-- 每日雙打卡進度膠囊 (11:00前早安 + 23:00前晚安) -->
+    <div id="daily-progress-bar" class="flex items-center gap-1.5 sm:gap-2 bg-white/85 backdrop-blur-sm border border-[#EFE6F4] rounded-2xl px-3 py-1.5 shadow-xs">
+      <div id="badge-morning" class="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#F7F4FA] text-[#9B91AA] transition-colors">
+        <span>☀️</span>
+        <span>11:00前早安</span>
+        <span id="check-morning" class="font-bold">○</span>
+      </div>
+      <div id="badge-evening" class="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#F7F4FA] text-[#9B91AA] transition-colors">
+        <span>🌙</span>
+        <span>23:00前晚安</span>
+        <span id="check-evening" class="font-bold">○</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 畫面一：首頁六種小精靈選擇 ==================== -->
+  <main id="screen-select" class="relative z-10 flex-1 flex flex-col items-center justify-start sm:justify-center w-full max-w-3xl mx-auto px-4 pt-4 pb-28 sm:pb-24">
+    <div class="text-center mb-5 sm:mb-6">
+      <span class="inline-block px-3.5 py-1 rounded-full bg-[#FFF0F6] text-[#C87D9E] text-xs font-bold mb-2 border border-[#F8DCE8]">
+        ♡ 選擇今日陪伴你的治癒夥伴 ♡
+      </span>
+      <h1 class="text-2xl sm:text-3xl font-bold text-[#5C546A] tracking-wide">今天想和哪隻小精靈玩呢？</h1>
+      <p class="text-xs sm:text-sm text-[#8E859E] mt-1.5 leading-relaxed">
+        逢 <span class="font-bold text-[#6B5FB5]">星期日和星期一 (香港時間)</span> 可更換小精靈。<br class="sm:hidden" />
+        每日於 <span class="font-bold text-[#D19358]">11:00前</span> 及 <span class="font-bold text-[#8884C4]">23:00前</span> 互動各一次，即可<span class="font-bold text-[#C87D9E]">獲特殊背景紙</span>！
+      </p>
+    </div>
+
+    <!-- 六隻小精靈卡片網格 -->
+    <div id="spirit-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4 w-full">
+      <!-- 由 JavaScript 動態生成六張小精靈卡片 -->
+    </div>
+  </main>
+
+  <!-- ==================== 畫面二：小精靈主互動舞台 ==================== -->
+  <main id="screen-interact" class="hidden relative z-10 flex-1 flex flex-col items-center justify-between w-full max-w-2xl mx-auto px-4 pt-3 pb-28 sm:pb-24">
+    
+    <!-- 頂部控制列：返回更換精靈 & 精靈名稱標籤 -->
+    <div class="w-full flex items-center justify-between">
+      <button id="btn-change-spirit" class="pastel-btn flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white/90 border-2 border-[#EFE6F4] text-xs sm:text-sm font-medium text-[#6B627A]">
+        <span>↩</span>
+        <span>更換小精靈</span>
+      </button>
+
+      <div id="active-spirit-tag" class="px-4 py-1.5 rounded-2xl bg-[#FFF6EB] border border-[#F7E2C6] text-xs sm:text-sm font-bold text-[#B9854C]">
+        ☁️ 雲朵小精靈
+      </div>
+    </div>
+
+    <!-- 中央互動舞台：鼓勵氣泡 + 像素小精靈 -->
+    <div class="flex-1 flex flex-col items-center justify-center w-full my-4">
+      
+      <!-- 專屬暖心鼓勵氣泡框 (摸摸與點擊期間停留直至手指離開小精靈，不閃爍) -->
+      <div class="w-full max-w-md min-h-[102px] flex items-end justify-center mb-3 px-2">
+        <div id="speech-bubble" class="bubble-pop relative bg-white/95 border-2 border-[#EADCF5] rounded-3xl px-5 py-3.5 shadow-md text-center max-w-full">
+          <p id="speech-text" class="text-sm sm:text-base font-medium text-[#5C546A] leading-relaxed">
+            嗨！見到你真開心呀，點一點或者左右摸摸我吧～
+          </p>
+          <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-[#EADCF5] rotate-45"></div>
+        </div>
+      </div>
+
+      <!-- 精靈觸控/點擊互動區 (支援點擊與左右滑動搓揉摸摸) -->
+      <div id="spirit-stage" class="relative flex flex-col items-center justify-center cursor-pointer p-6 rounded-full select-none" style="touch-action: none;">
+        <div id="spirit-aura" class="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-[#FFF3D6]/70 blur-xl pointer-events-none transition-colors duration-500"></div>
+        
+        <!-- 物理天空浮遊容器 -->
+        <div id="spirit-float-mover" class="relative z-10 will-change-transform">
+          <div id="spirit-anim-wrapper">
+            <canvas id="main-spirit-canvas" width="32" height="32" class="pixel-canvas w-40 h-40 sm:w-48 sm:h-48 drop-shadow-sm"></canvas>
+          </div>
+        </div>
+
+        <!-- 腳下軟綿綿陰影 -->
+        <div id="spirit-shadow" class="w-24 h-3.5 bg-[#D9CEE3]/45 rounded-full mt-2 blur-[1px] transition-transform duration-300"></div>
+      </div>
+
+      <p id="interaction-hint" class="text-xs text-[#9B91AA] mt-2 tracking-wide text-center">
+        ✨ 點擊小精靈或喺佢身上左右滑動摸摸，對話會一直停留到你鬆開手指 ✨
+      </p>
+    </div>
+
+    <!-- 底部快捷互動按鈕列 -->
+    <div class="flex items-center justify-center w-full max-w-xs">
+      <button id="btn-praise" class="pastel-btn w-full py-3.5 px-6 rounded-2xl bg-[#FFF8E6] border-2 border-[#F7E3B5] text-[#B88635] font-bold text-sm flex items-center justify-center gap-2">
+        <span>🌟</span>
+        <span>讚賞小精靈</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ==================== 右下角固定：取出便條紙按鈕 + 玻璃許願樽 ==================== -->
+  <div id="wishing-jar-anchor" class="fixed bottom-3.5 right-3.5 sm:bottom-6 sm:right-6 z-30 flex items-end gap-2.5">
+    <button id="btn-quick-take-memo" class="pastel-btn mb-1 px-3 py-2 rounded-2xl bg-white/95 border-2 border-[#F2E2BD] text-[11px] sm:text-xs font-bold text-[#8A682C] shadow-sm flex items-center gap-1.5 hover:bg-[#FFFDF5]" title="從許願樽拿出一張便條紙書寫">
+      <span>✍️</span>
+      <span>取出便條紙</span>
+    </button>
+
+    <button id="btn-open-jar" class="group relative flex flex-col items-center focus:outline-none" aria-label="打開祝福許願樽">
+      <span class="mb-1 px-2.5 py-0.5 rounded-full bg-white/95 border border-[#EADCF5] text-[11px] font-medium text-[#6B627A] shadow-sm group-hover:-translate-y-0.5 transition-transform">
+        許願樽 (<span id="jar-count">0</span>)
+      </span>
+      <div class="p-1.5 rounded-3xl bg-white/85 backdrop-blur-sm border-2 border-[#EFE6F4] shadow-md group-hover:scale-105 transition-transform">
+        <canvas id="wishing-jar-canvas" width="24" height="28" class="pixel-canvas w-14 h-16 sm:w-16 sm:h-20"></canvas>
+      </div>
+    </button>
+  </div>
+
+  <!-- ==================== 彈窗一：星星暗花 / 獲特殊背景紙彈窗 ==================== -->
+  <div id="modal-memo" class="hidden fixed inset-0 z-50 bg-[#4A4158]/35 backdrop-blur-xs flex items-center justify-center p-4">
+    <div id="memo-card-container" class="star-memo-paper w-full max-w-md rounded-3xl p-6 sm:p-7 transition-all">
+      <div id="memo-watermark" class="memo-watermark-layer"></div>
+
+      <div class="relative z-10">
+        <div class="flex flex-col items-center text-center mb-4">
+          <div id="memo-icon-box" class="w-12 h-12 rounded-2xl bg-[#FFF5D6] border-2 border-[#F5DF9D] flex items-center justify-center mb-2 shadow-xs">
+            <canvas id="gift-star-canvas" width="16" height="16" class="pixel-canvas w-8 h-8"></canvas>
+          </div>
+          <span id="memo-badge-label" class="text-xs font-bold tracking-wider text-[#B88934] bg-[#FFF4D4] px-3 py-0.5 rounded-full mb-1">
+            ✦ 許願樽星星暗花便條紙 ✦
+          </span>
+          <h3 id="memo-modal-title" class="text-lg sm:text-xl font-bold text-[#5C546A]">寫下一份溫柔祝福</h3>
+          <p id="memo-modal-subtitle" class="text-xs text-[#7E758E] mt-1 leading-relaxed">
+            寫低對自己或者重要嘅人嘅祝福鼓勵，確定後會捲成紙條飛入許願樽保存。
+          </p>
+        </div>
+
+        <div id="memo-divider" class="flex items-center justify-center gap-2 text-[#E5C98B] text-xs mb-3 select-none">
+          <span>✦</span><span>·</span><span>·</span><span>✧</span><span>·</span><span>·</span><span>✦</span>
+        </div>
+
+        <div class="relative mb-4">
+          <textarea
+            id="memo-input"
+            rows="4"
+            maxlength="140"
+            placeholder="例如：希望今個星期順順利利，每日都保持好心情，加油呀！✦"
+            class="w-full rounded-2xl bg-white/85 border-2 border-[#EADBC8] focus:border-[#D6B98C] focus:outline-none p-3.5 text-sm text-[#5C546A] placeholder-[#B4AABF] resize-none leading-relaxed"
+          ></textarea>
+          <div class="flex justify-between items-center mt-1.5 px-1 text-[11px] text-[#8A8099]">
+            <span id="memo-spirit-witness">見證精靈：雲朵小精靈</span>
+            <span><span id="memo-char-count">0</span> / 140</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="btn-cancel-memo" class="pastel-btn px-4 py-2.5 rounded-2xl bg-white/90 border-2 border-[#EFE6F4] text-xs sm:text-sm text-[#8E859E] font-medium">
+            放回樽內
+          </button>
+          <button id="btn-save-memo" class="pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFE396] to-[#FFD584] border-2 border-[#F3C66F] text-[#6E5019] font-bold text-sm flex items-center justify-center gap-1.5">
+            <span>📜</span>
+            <span>確定儲存並捲入許願樽</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 彈窗二：玻璃許願樽收藏檢視 (內建雙分頁：許願紙卷清單 / 回憶小日曆) ==================== -->
+  <div id="modal-jar" class="hidden fixed inset-0 z-50 bg-[#4A4158]/35 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="pastel-card w-full max-w-lg max-h-[86dvh] flex flex-col p-5 sm:p-6">
+      
+      <!-- 標題列 -->
+      <div class="flex items-center justify-between pb-3 border-b-2 border-[#F3ECF8]">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🫙</span>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-[#5C546A]">玻璃祝福許願樽</h3>
+            <p class="text-xs text-[#8E859E]">隨時可以拿出新便條紙，或透過日曆翻看回憶</p>
+          </div>
+        </div>
+        <button id="btn-close-jar" class="w-8 h-8 rounded-full bg-[#F6F0FA] hover:bg-[#ECE1F5] text-[#7A6F8A] flex items-center justify-center font-bold text-sm">
+          ✕
+        </button>
+      </div>
+
+      <!-- 隨時取出便條紙橫幅按鈕 -->
+      <div class="pt-3">
+        <button id="btn-write-extra" class="pastel-btn w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFFDF2] to-[#FFF6DB] border-2 border-[#F3DFB4] text-[#7D5E24] font-bold text-xs sm:text-sm flex items-center justify-center gap-2">
+          <span>✍️</span>
+          <span>拿出一張星星暗花便條紙書寫</span>
+        </button>
+      </div>
+
+      <!-- 馬卡龍雙分頁切換標籤 (Tab A: 許願紙卷清單 / Tab B: 回憶小日曆) -->
+      <div class="grid grid-cols-2 gap-2 bg-[#F6F1FA] p-1.5 rounded-2xl mt-3 border border-[#EAE0F2]">
+        <button id="tab-jar-list" type="button" class="py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-[#5C546A] shadow-xs flex items-center justify-center gap-1.5">
+          <span>📜</span>
+          <span>許願紙卷清單</span>
+        </button>
+        <button id="tab-jar-calendar" type="button" class="py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all text-[#8E859E] hover:text-[#5C546A] flex items-center justify-center gap-1.5">
+          <span>📅</span>
+          <span>回憶小日曆</span>
+        </button>
+      </div>
+
+      <!-- 分頁 A 內容：祝福紙條清單 -->
+      <div id="jar-notes-list" class="flex-1 overflow-y-auto py-3.5 space-y-3 pr-1">
+        <!-- 動態載入已儲存的紙條 -->
+      </div>
+
+      <!-- 分頁 B 內容：回憶小日曆視圖 -->
+      <div id="jar-calendar-view" class="hidden flex-1 overflow-y-auto py-3 space-y-3 pr-1">
+        <!-- 月份切換控制器 -->
+        <div class="flex items-center justify-between bg-[#FAF6FD] border border-[#EDE3F5] rounded-2xl px-3 py-2">
+          <button id="btn-cal-prev" type="button" class="px-2.5 py-1 rounded-xl bg-white border border-[#E6DAF0] text-xs font-bold text-[#6B627A] hover:bg-[#F5EEFA] active:scale-95 transition">
+            ◀ 上個月
+          </button>
+          <div class="flex items-center gap-2">
+            <span id="cal-month-title" class="text-xs sm:text-sm font-bold text-[#5C546A]">2026年 11月</span>
+            <button id="btn-cal-today" type="button" class="px-2 py-0.5 rounded-lg bg-[#FFF0F6] border border-[#F5D3E3] text-[10px] font-bold text-[#C26D96] hover:bg-[#FFE5F0]">
+              本月
+            </button>
+          </div>
+          <button id="btn-cal-next" type="button" class="px-2.5 py-1 rounded-xl bg-white border border-[#E6DAF0] text-xs font-bold text-[#6B627A] hover:bg-[#F5EEFA] active:scale-95 transition">
+            下個月 ▶
+          </button>
+        </div>
+
+        <!-- 星期標題列 (日 ~ 六) -->
+        <div class="grid grid-cols-7 text-center text-[11px] font-bold text-[#9A90AA] px-1">
+          <span class="text-[#D47A96]">日</span>
+          <span>一</span>
+          <span>二</span>
+          <span>三</span>
+          <span>四</span>
+          <span>五</span>
+          <span class="text-[#7B8EC9]">六</span>
+        </div>
+
+        <!-- 日曆日期格子網格 -->
+        <div id="cal-days-grid" class="grid grid-cols-7 gap-1.5">
+          <!-- 由 JS 動態生成當月日期格子 -->
+        </div>
+
+        <!-- 選定日期的便條紙預覽區 -->
+        <div class="pt-2 border-t border-[#EFE6F4]">
+          <div class="flex items-center justify-between mb-2 px-1">
+            <span id="cal-selected-date-label" class="text-xs font-bold text-[#6B627A]">📅 點擊日曆日期查看當日便條</span>
+            <span id="cal-selected-count" class="text-[11px] text-[#9A90AA]"></span>
+          </div>
+          <div id="cal-day-wishes-list" class="space-y-2.5">
+            <!-- 動態顯示選定日期的便條紙 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部說明 -->
+      <div class="pt-3 border-t-2 border-[#F3ECF8] flex items-center justify-between text-xs text-[#9A90AA]">
+        <span>共收藏了 <strong id="modal-jar-total" class="text-[#6E5C85]">0</strong> 份祝福紙卷</span>
+        <span>雙打卡達標可獲特殊背景紙 ✨</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 彈窗三：單張祝福信紙完整重溫 (100% 還原同款背景色與暗花) ==================== -->
+  <div id="modal-read-wish" class="hidden fixed inset-0 z-50 bg-[#4A4158]/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div id="read-wish-card" class="star-memo-paper w-full max-w-md rounded-3xl p-6 sm:p-7 relative transition-all">
+      <div id="read-wish-watermark" class="memo-watermark-layer"></div>
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-3">
+          <span id="read-wish-type-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-white/85 text-[#7A6332] border border-[#EADBC8]">
+            ✦ 星星暗花便條紙
+          </span>
+          <span id="read-wish-date" class="text-xs text-[#8E859E]">2026-11-16</span>
+        </div>
+
+        <div class="min-h-[124px] rounded-2xl bg-white/75 border border-white/95 p-4 my-3 flex items-center justify-center">
+          <p id="read-wish-content" class="text-sm sm:text-base text-[#5C546A] leading-relaxed whitespace-pre-wrap break-words text-center font-medium"></p>
+        </div>
+
+        <div class="flex items-center justify-between mt-4 gap-2">
+          <span id="read-wish-spirit" class="text-xs text-[#8E859E]">見證精靈：雲朵小精靈</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-delete-wish" class="px-3 py-2 rounded-2xl bg-white/80 hover:bg-[#FFF0F3] border border-[#F2DCE2] text-xs text-[#B86E82] font-medium transition-colors">
+              刪除
+            </button>
+            <button id="btn-close-read-wish" class="pastel-btn px-4 py-2 rounded-2xl bg-white border-2 border-[#EFE6F4] text-xs sm:text-sm font-bold text-[#5C546A]">
+              捲好放回樽內
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 輕量提示浮標 (完全取代 alert/confirm) -->
+  <div id="toast-banner" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#5C546A]/95 text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-lg whitespace-nowrap pointer-events-none">
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 六種小精靈專屬 50 句獨一無二短句資料庫 (合計 300 句，精準區分早/晚/日常)
+    // =========================================================================
+    const SPIRIT_QUOTES = {
+      cloud: {
+        morning: [
+          "早安呀！我係軟綿綿嘅雲朵小精靈，今朝幫你把天空嘅烏雲通通吹散啦～",
+          "起身囉！晨光灑喺我身上暖笠笠，快啲嚟拎走今日份嘅蓬鬆好心情！",
+          "早晨呀～新嘅一日，願你嘅步伐好似白雲飄過藍天咁輕鬆自在。",
+          "早安問候送到！我已經幫你將尋日嘅疲倦摺成一朵小雲朵飄走啦。",
+          "太陽公公照亮我嘅雲朵邊緣囉，今日嘅你一定會閃閃發光！",
+          "早上好！記得飲杯暖水，讓我用軟綿綿嘅雲朵懷抱陪你開啟美好一日。",
+          "早安呀小夥伴！就算今朝有少少眼瞓都唔緊要，慢慢嚟我喺度等你～",
+          "清晨嘅微風吹動我飄呀飄，順便幫你帶嚟一整日嘅好運氣！",
+          "早安！今日唔使急住做晒所有事，好似雲朵咁按住自己嘅速度飄就最靚。",
+          "早晨呀！我啱啱喺高空幫你偵察過，今日前方晴空萬里，放心出發吧！"
+        ],
+        evening: [
+          "辛苦晒啦！夜晚就放心挨落我軟綿綿嘅雲朵懷抱入面休息吧～",
+          "晚安呀！我已經幫你鋪好一張鬆軟嘅雲朵床褥，今晚只管發個甜夢。",
+          "夜深啦，讓晚風輕輕吹走你今日嘅壓力，雲朵小精靈會守住你入睡。",
+          "晚安問候送到～今日就算有少少累都唔怕，訓醒一覺我又會喺度陪你。",
+          "月亮掛上夜空囉，快啲鑽入被窩，感受雲朵一樣輕柔嘅好夢吧！",
+          "今日嘅你已經非常努力啦，夜晚把所有煩惱交俾我保管，安心合埋眼吧。",
+          "晚安呀～願你今晚嘅夢境好似棉花糖雲朵咁甜絲絲、輕飄飄。",
+          "夜色好溫柔，雲朵小精靈輕輕拍拍你嘅背脊，祝你有個安穩嘅好眠。",
+          "放低手機同擔心吧，我會化作一朵守護雲，靜靜飄喺你夢境旁邊。",
+          "晚安小夥伴！多謝你今日咁努力撐過每個時刻，聽朝見啦～"
+        ],
+        general: [
+          "飄呀飄～唔開心嗰陣隨時將頭挨過嚟，我嘅雲朵身體超級有彈性！",
+          "累咗就停低抖一抖啦，連白雲都會喺山頭停低休息一陣㗎。",
+          "摸摸我嘅雲朵捲毛～係咪覺得心入面嘅煩躁即刻變軟變輕呢？",
+          "你唔需要時刻都咁堅強，喺雲朵小精靈面前可以盡情放鬆撒嬌。",
+          "生活偶爾有陣風吹過都唔緊要，雲朵被吹散之後又會重新聚埋一齊！",
+          "我剛剛幫你把唔開心嘅情緒吸走啦，宜家幫你噴返一陣甜甜微風～",
+          "你認真生活嘅模樣真係好可愛，雲朵小精靈要送你一個大抱抱！",
+          "唔好對自己太嚴格啦，偶爾發下呆、望下天空雲朵都係好重要嘅休息。",
+          "每次被你摸摸，我朵雲就會開心到膨脹大一圈，軟綿綿咁包住你！",
+          "就算成個世界都催你快啲，雲朵小精靈只會同你講「慢慢飄，唔使急」。",
+          "你心入面重甸甸嘅時候，記得我永遠都係你最柔軟嘅避風港。",
+          "送你一朵隱形小幸運雲！今日無論去到邊都會有好運跟住你。",
+          "遇到難題唔好驚，試下好似雲朵繞過高山咁，輕輕鬆鬆轉個彎就過到！",
+          "被你讚賞嘅感覺好似曬到暖笠笠嘅陽光，成朵雲都變成粉紅色啦～",
+          "你嘅溫柔同善良，比高空上面最純白嘅雲朵仲要乾淨動人。",
+          "今日有冇記得深呼吸？吸一口雲端新鮮空氣，呼出所有緊張吧！",
+          "唔准偷偷唔開心呀，如果心入面落雨，我就幫你把雨雲通通趕走！",
+          "蹭蹭你嘅手指～能夠陪喺你身邊飄呀飄，係我最幸福嘅事。",
+          "你已經做得好好啦，值得擁有一個好似雲朵般無憂無慮嘅下午！",
+          "無論你今日行到邊一步，我都為你感到好驕傲，繼續加油呀！",
+          "軟綿綿、暖笠笠～希望我嘅陪伴可以幫你卸低膊頭上面嘅重量。",
+          "生活總會有不期而遇嘅小驚喜，正藏喺前面嗰朵雲後面等緊你！",
+          "被你咁溫柔對待，我決定將今日份嘅雙倍好運全部吹向你！",
+          "就算暫時睇唔清方向都唔怕，雲霧散開之後就會見到最靚嘅藍天。",
+          "多謝你今日都嚟探我，我會一直飄喺度做你最忠實嘅小夥伴！",
+          "唔好因為一時嘅失誤責怪自己，雲朵偶爾都會變形，但依然好可愛！",
+          "你笑起上嚟真係好好睇，令我成朵雲都忍唔住跟住你一齊跳舞～",
+          "今日份嘅快樂能量已由雲朵小精靈親自配送到你心入面啦！",
+          "記住呀，無論發生咩事，你永遠都有我呢朵小雲陪住你。",
+          "嘻嘻，再摸多兩下好唔好？你嘅掌心好暖，令我好想唱首歌仔俾你聽～"
+        ]
+      },
+
+      rainbow: {
+        morning: [
+          "早安呀！我係彩虹小精靈，今朝一早就幫你把心情染上七彩繽紛嘅顏色！",
+          "早晨！雨過天晴就會見到我啦，新嘅一日一定會充滿美好嘅轉機！",
+          "早安問候送到～今日由紅色嘅熱情同黃色嘅快樂陪你展開新一天！",
+          "起身囉！彩虹橋已經喺你面前搭好，今日行嘅每一步都通往好運！",
+          "早上好呀！就算尋日有過小烏雲，今朝太陽一出我就為你綻放七彩光芒！",
+          "早安！帶住好似彩虹咁燦爛嘅笑容出門吧，好運氣一定會被你吸引過嚟！",
+          "早晨呀小夥伴！我啱啱幫你喺天空畫咗一道迷你幸運彩虹，快啲許個願吧～",
+          "早安！今日無論遇到咩挑戰，我都會用七種色彩幫你加油打氣！",
+          "清晨第一道彩虹光芒送俾你，祝你今日事事順心、驚喜連連！",
+          "早上好！記得食個豐富早餐，幫自己補充滿滿嘅七彩能量喔！"
+        ],
+        evening: [
+          "辛苦晒啦！夜晚彩虹小精靈會收起耀眼光芒，化作溫柔極光守護你入睡。",
+          "晚安呀～把今日所有嘅努力都化作七彩星塵，伴你進入甜美夢鄉。",
+          "夜深啦，願你今晚嘅夢境好似彩虹糖果屋咁繽紛又快樂！",
+          "晚安問候送到！多謝你今日咁努力生活，聽日我又會帶住好運嚟見你。",
+          "月亮出嚟囉，彩虹小精靈輕輕為你蓋上七彩夢幻被子，安心訓覺吧～",
+          "今日就算有少少不如意都唔緊要，雨後總會有彩虹，訓醒又係好漢一條！",
+          "晚安！願所有溫柔嘅色彩都悄悄飛入你嘅夢入面，陪你發個好夢。",
+          "夜色好靚呀，好好休息充電吧，聽朝太陽升起時我再同你一齊閃耀！",
+          "放低今日嘅疲倦啦，彩虹小精靈喺你枕頭邊放咗一粒甜甜嘅好夢糖果。",
+          "晚安小夥伴～祝你一覺訓到大天光，起身時心情晴朗無比！"
+        ],
+        general: [
+          "叮咚！見到彩虹小精靈代表今日會有意想不到嘅好運降臨喺你身上！",
+          "你嘅生活唔需要單調嘅黑白，有我喺度就會幫你添上最溫柔嘅粉彩！",
+          "摸摸我嘅七彩弧線～係咪感覺成個人都充滿咗活潑又治癒嘅能量呢？",
+          "記住呀，每一次經歷風雨之後，都係為咗遇見更加靚麗嘅彩虹！",
+          "你身上有好多唔同嘅閃光點，合埋一齊就係一道獨一無二嘅七彩光芒！",
+          "唔開心嗰陣望下我吧，我幫你把灰色嘅心情通通調色變成粉紅色同薄荷綠！",
+          "被你讚賞真係超級開心！我嘅七種顏色都忍唔住亮晶晶咁閃起上嚟啦～",
+          "就算今日只係好平凡嘅一日，你都可以為自己創造一點點小色彩！",
+          "彩虹小精靈宣布：今日你嘅幸運色係所有你鍾意嘅顏色！",
+          "慢慢嚟唔使急，七種顏色要一層一層畫先會最靚，人生都係一樣㗎。",
+          "你對我咁溫柔，我要把彩虹盡頭嗰罐幸福寶藏全部送晒俾你！",
+          "遇到困難唔好灰心，彩虹永遠都喺風雨之後等緊你抬頭發現。",
+          "嘻嘻，你一摸我，我就開心到想喺空中轉個七彩圈圈俾你睇！",
+          "你笑起上嚟比雨後第一道陽光仲要耀眼，真係超級治癒呀！",
+          "今日有冇記得飲水同休息呀？保持好狀態先可以繼續發光發熱喔！",
+          "唔好同任何人比較，每種顏色都有自己無可取代嘅美麗同價值。",
+          "送你一張隱形彩虹通行證！今日做咩都會特別順利、特別好彩！",
+          "如果覺得心入面有少少悶，不妨寫低你嘅願望放入許願樽吧～",
+          "你真係一個好善良又可愛嘅人，能成為你嘅小精靈我好自豪！",
+          "蹭蹭你嘅手心～把你嘅煩惱交俾我，我幫你變成七彩泡泡吹走！",
+          "無論天氣點變，我都會一直掛喺你心入面嘅天空陪住你。",
+          "今日份嘅快樂已經調配好啦：三分甜蜜、三分幸運加四分輕鬆！",
+          "你每次認真努力嘅樣子，都令我覺得呢個世界充滿希望同色彩。",
+          "唔准否定自己呀，喺我眼中你一直都係最閃亮嘅七彩小天使！",
+          "累咗就停低欣賞下身邊嘅風景吧，好多小確幸正喺你身邊發光。",
+          "哇！收到你嘅鼓勵，我開心到想即刻唱首歡樂歌仔慶祝一下！",
+          "願你今日遇到嘅每件事，都好似彩虹糖咁帶俾你唔同嘅甜味。",
+          "有我彩虹小精靈撐住你，所有難關好快就會雨過天晴啦！",
+          "多謝你成日嚟陪我玩，你嘅陪伴令我嘅顏色變得更加溫暖柔和。",
+          "保持微笑呀！你嘅笑容就係啟動今日好運魔法嘅最強咒語～"
+        ]
+      },
+
+      star: {
+        morning: [
+          "早安呀！雖然太陽出嚟囉，但星星小精靈依然會喺你心入面閃閃發光！",
+          "早晨！我啱啱喺夜空收集咗一整晚嘅星光好運，今朝全部送晒俾你！",
+          "早安問候送到～今日嘅你依然係宇宙入面最獨一無二嘅一粒小星星！",
+          "起身啦！新嘅一日開始囉，帶住亮晶晶嘅眼神去迎接今日嘅精彩吧！",
+          "早上好呀！就算白晝睇唔見我，我都會一直喺高空靜靜守護住你。",
+          "早安！今日唔使同其他星星比邊個最光，你按自己節奏閃耀就最靚！",
+          "早晨呀小夥伴！我已經幫你把今日份嘅勇氣同靈感點亮啦，加油喔！",
+          "早安！願你今日踏出嘅每一步，都有幸運星光喺前面幫你引路。",
+          "清晨好呀～深呼吸一口氣，準備好今日繼續做一粒發光發熱嘅小星星未？",
+          "早安問候！祝你今日心情晴朗，好似晴空下閃爍嘅晨星咁充滿希望！"
+        ],
+        evening: [
+          "辛苦晒啦！夜晚係我星星小精靈嘅主場，讓我為你照亮安心休息嘅路！",
+          "晚安呀～我已經喺你窗邊掛好一串溫柔小星星，陪你發個甜美夢境。",
+          "夜深啦，把今日嘅煩惱通通交俾流星帶走，今晚只管安心訓個好覺。",
+          "晚安問候送到！你今日嘅努力，夜空入面每一粒星星都睇得一清二楚。",
+          "合埋眼吧，星星小精靈會喺你夢境入口守住，唔准任何噩夢靠近你！",
+          "今日就算有少少累都唔緊要，夜晚喺星光下好好充電，聽日又會充滿力量！",
+          "晚安呀～願所有美好嘅願望都好似流星咁，悄悄實現喺你嘅夢入面。",
+          "夜色好靜謐，星星小精靈輕輕眨下眼，同你講聲「今日辛苦了，晚安」。",
+          "放低手機同壓力吧，讓柔和嘅星光幫你按摩下疲倦嘅眼睛同心靈～",
+          "晚安小夥伴！聽晚我依然會喺同一片夜空閃爍住等你返嚟傾偈。"
+        ],
+        general: [
+          "Bling Bling！你嚟探我啦，我開心到成粒星星都忍唔住轉圈圈！",
+          "就算身處黑夜都唔使驚，因為只有喺暗處，先睇得見你身上嘅星光！",
+          "摸摸我嘅五個小尖角～每摸一下就幫你儲一粒「心想事成幸運星」！",
+          "你唔需要完美先值得被愛，每粒星星都有唔同形狀，但每一粒都好耀眼。",
+          "遇到迷惘嗰陣記得抬頭望下我，星星小精靈永遠會幫你指明溫柔方向。",
+          "你認真堅持夢想嘅模樣，比銀河入面最璀璨嘅流星雨仲要迷人！",
+          "唔好因為一時嘅低潮而灰心，烏雲散開之後，星光依然喺度閃耀。",
+          "被你讚賞嘅感覺好似接收到宇宙能量波，我即刻精神百倍啦！",
+          "如果心入面有咩願望唔敢講出口，不如寫低放入許願樽，我幫你實現佢！",
+          "今日有冇好好照顧自己呀？身體健康先可以陪我一齊睇更多靚風景㗎。",
+          "送你一粒專屬守護星！今日無論遇到咩事都會化險為夷、順順利利！",
+          "你嘅溫柔同善良，好似夜空入面最暖嘅北極星，令身邊嘅人都覺得好安心。",
+          "慢慢嚟唔使急，連星光都要飛行好耐先到達地球，美好嘅事值得等待。",
+          "嘻嘻，你一摸我我就想閃閃發光，把所有好運氣都照亮送俾你！",
+          "唔准睇低自己呀，喺我眼中你一直都係閃閃發光嘅寶藏小天使！",
+          "累咗就停低歇一歇吧，星星白天都會休息，夜晚先至出嚟閃耀㗎。",
+          "蹭蹭你嘅手指～多謝你一直以嚟嘅陪伴，有你喺度我覺得好幸福！",
+          "你笑起上嚟眼入面好似有星星咁靚，希望今日有好多事可以逗你笑！",
+          "遇到難題嗰陣深呼吸，星星小精靈會把勇氣化作光點灑喺你膊頭上。",
+          "今日份嘅小確幸已經送到啦，快啲張開雙手接住呢份星光祝福吧！",
+          "無論你行到幾遠，只要你需要鼓勵，我都會第一時間閃現喺你身邊。",
+          "被你咁溫柔對待，我決定今晚幫你向成個銀河系許願，祝你永遠快樂！",
+          "唔好為未發生嘅事擔心太耐，交俾時間同星光慢慢幫你安排就好。",
+          "哇！收到你嘅摸摸，我開心到差啲唱出宇宙最歡樂嘅星星之歌啦～",
+          "你嘅每一份努力都唔會白費，佢哋正喺未來等緊變成閃亮嘅果實。",
+          "保持一顆輕鬆自在嘅心吧，好運氣最鍾意靠近笑口常開嘅你！",
+          "今日有冇記得飲夠水呀？星星小精靈喺度溫馨提醒你愛惜自己喔～",
+          "就算今日只係完成咗好細嘅事，都值得為自己點亮一粒小星星獎勵！",
+          "有我星星小精靈陪住你，你永遠都唔會係孤單一個人。",
+          "多謝你今日都記得嚟探我，願你每一日都充滿亮晶晶嘅小奇蹟！"
+        ]
+      },
+
+      sun: {
+        morning: [
+          "早安呀！暖笠笠嘅太陽小精靈準時升起啦，快啲嚟吸收今日份嘅滿滿元氣！",
+          "早晨！太陽公公照到你面珠紅卜卜，今日一定會精力充沛、事事順利！",
+          "早安問候送到！我已經幫你把今日所有嘅陰霾通通曬乾啦，開心出發吧！",
+          "起身囉小夥伴！新嘅一日充滿無限可能，太陽小精靈喺度大聲幫你打氣！",
+          "早上好呀！伸個大懶腰迎接晨光，願你今日心情好似陽光咁燦爛溫暖！",
+          "早安！就算今日有好多任務，有我太陽能量撐住你，一定可以輕鬆搞掂！",
+          "早晨呀～記得食份暖笠笠嘅早餐，配合我嘅陽光祝福，今日必定無敵！",
+          "早安！你認真迎接清晨嘅樣子超級有朝氣，我決定送你雙倍陽光好運！",
+          "晨光微暖，太陽小精靈輕輕拍拍你嘅膊頭：加油呀，今日你最棒！",
+          "早上好！願你今日遇到嘅每個人、每件事都充滿陽光般嘅善意同溫度！"
+        ],
+        evening: [
+          "辛苦晒啦！太陽小精靈要收起耀眼光芒落山休息囉，你都要早啲抖呀！",
+          "晚安呀～雖然太陽落咗山，但我留低咗一整日嘅暖意喺你被窩入面！",
+          "夜深啦，太陽小精靈都要合埋眼充電啦，快啲一齊進入甜美夢鄉吧～",
+          "晚安問候送到！今日你真係超級努力，夜晚就放心交俾月光同休息吧。",
+          "曬咗一整日陽光好舒服呀，今晚祝你發個暖洋洋、無憂無慮嘅好夢！",
+          "今日就算有少少疲倦都唔怕，訓醒一覺聽朝我又會精神奕奕咁升起見你！",
+          "晚安呀小夥伴～把所有煩惱留喺今日，聽朝太陽升起又係全新美好開始！",
+          "夜色溫柔，太陽小精靈已經調成最柔和嘅小夜燈模式，靜靜陪你入睡。",
+          "放低手機同壓力吧，感受被窩入面暖笠笠嘅溫度，安心休息一晚啦！",
+          "晚安！多謝你今日咁努力發光，聽朝我會準時帶住朝陽返嚟搵你～"
+        ],
+        general: [
+          "哈囉！暖笠笠嘅太陽小精靈報到！快啲過嚟摸摸我，幫你驅走所有寒意同疲倦！",
+          "無論生活遇到咩風雨，太陽永遠都會喺雲層後面準時為你發光！",
+          "摸摸我嘅小光芒～係咪覺得成個人即刻暖洋洋、充滿正能量呢？",
+          "你本身就係一粒好溫暖嘅小太陽，成日喺不知不覺間照亮身邊嘅人！",
+          "唔開心嗰陣嚟我身邊曬下太陽吧，我幫你把所有委屈同眼淚通通蒸發掉！",
+          "被你讚賞嘅感覺好似熱量爆燈，我開心到想喺空中跳返支熱情太陽舞！",
+          "唔好對自己太苛刻啦，連太陽都有陰天休息嘅時候，你偶爾偷懶完全正常！",
+          "你積極面對生活嘅樣子真係超級帥氣，太陽小精靈要為你瘋狂拍手！",
+          "送你一束專屬暖陽！今日無論去到邊都會覺得心頭暖笠笠、好安心！",
+          "遇到困難唔好退縮，用你內心嘅熱情同勇氣，一定可以融化所有冰山！",
+          "今日有冇記得飲水呀？曬完太陽記得補充水分，照顧好自己最重要！",
+          "嘻嘻，你一摸我我就暖到發光，把滿滿嘅好運氣全部傳送俾你！",
+          "唔准垂頭喪氣呀，抬起頭望下陽光，你笑起上嚟先係最靚嘅風景！",
+          "累咗就停低抖一抖吧，充飽電之後先可以繼續向住目標進發㗎。",
+          "蹭蹭你嘅手心～能夠成為你嘅專屬能量站，我覺得超級有成就感！",
+          "你嘅善良同熱情非常有感染力，遇到你係我最大嘅幸運！",
+          "今日份嘅幸運指數已經被太陽小精靈曬到最高點啦，放心去做你想做嘅事！",
+          "如果覺得心入面有少少凍，不如寫低祝福放入許願樽，讓我幫你保暖吧～",
+          "慢慢嚟唔使急，陽光每日都係一步一步照亮大地，你按自己節奏行就好。",
+          "哇！收到你嘅鼓勵，我開心到想唱首元氣滿滿嘅歌仔俾你聽！",
+          "你已經做得非常出色啦，記得今日都要好好讚賞下努力嘅自己喔！",
+          "生活偶爾有小挫折唔緊要，拍拍塵土重新出發，陽光永遠喺前面等你！",
+          "被你咁溫柔對待，我決定把今日所有好運氣集中成一道光束照住你！",
+          "保持開朗輕鬆嘅心情吧，你嘅笑容比正午嘅陽光仲要燦爛動人！",
+          "無論發生咩事，太陽小精靈永遠都會企喺你呢一邊為你遮風擋雨！",
+          "今日有冇食啲好嘢獎勵自己呀？食飽飽先有力氣繼續發光發熱㗎～",
+          "你每次努力克服困難嘅瞬間，都閃耀住令人佩服嘅光芒！",
+          "深呼吸一口暖暖嘅空氣，把所有緊張同焦慮通通呼出體外吧！",
+          "多謝你今日都嚟探我，有你嘅陪伴我每日都充滿無窮能量！",
+          "記住呀，你值得擁有世上最溫暖嘅擁抱同最美好嘅一切！"
+        ]
+      },
+
+      moon: {
+        morning: [
+          "早安呀～雖然月亮小精靈準備要交更俾太陽啦，但臨走前都要祝你今日順順利利！",
+          "早晨！我啱啱守護咗你一整晚好夢，今朝交由陽光繼續陪你快樂出發吧～",
+          "早安問候送到！願你今朝起身嗰陣，心情好似清晨月色咁平靜又輕盈。",
+          "起身囉小夥伴！月亮小精靈喺天邊對你微笑揮手，祝你今日充滿好運！",
+          "早上好呀！昨晚有冇發個甜美嘅好夢呢？新嘅一日要繼續好好愛自己喔！",
+          "早安！就算白晝看唔見彎月，我嘅溫柔祝福依然會全天候跟住你。",
+          "早晨呀～慢慢醒神唔使急，記得飲杯暖水，帶著從容嘅心情開啟今日吧！",
+          "早安！今日無論忙唔忙，都要記得留少少安靜喘息嘅空間俾自己呀。",
+          "清晨微風吹過，月亮小精靈送你最後一縷星月祝福，祝你今日一切安好！",
+          "早上好！今日也要加油呀，夜晚我會準時返嚟聽你分享今日嘅故事～"
+        ],
+        evening: [
+          "噓～月光好溫柔呀，我係月亮小精靈，會靜靜地陪住你度過每個寧靜夜晚。",
+          "晚安呀～辛苦咗成日啦，今晚就安心交俾月光守護，舒舒服服訓個好覺吧。",
+          "夜深啦，月亮小精靈已經幫你拉上星空窗簾，隔絕外面所有嘈吵同煩惱。",
+          "晚安問候送到！把今日所有嘅壓力都放低，讓柔和月色幫你撫平心靈皺紋。",
+          "合埋眼吧，我會喺你夢境旁邊輕輕唱住搖籃曲，祝你有個最甜美嘅好夢～",
+          "今日就算有少少唔開心都唔緊要，月光會溫柔咁包容你所有情緒，安心休息吧。",
+          "晚安呀小夥伴！多謝你今日咁努力生活，今晚好好充電，唔准再熬夜啦！",
+          "夜色好美，月亮小精靈輕輕摸摸你嘅頭：你已經做得好好啦，晚安好夢。",
+          "放低手機同擔心吧，鑽入暖笠笠嘅被窩，感受月光般靜謐安心嘅懷抱。",
+          "晚安！願所有溫柔嘅夢境都悄悄降落喺你枕頭邊，聽朝見啦～"
+        ],
+        general: [
+          "噓～靜靜地挨過嚟吧，月亮小精靈最識傾聽你心入面所有小秘密同煩惱。",
+          "世界有時候好嘈吵，但喺我呢度，永遠都有一個專屬於你嘅安靜小角落。",
+          "摸摸我嘅彎彎月角～係咪覺得浮躁嘅心情即刻平靜落嚟呢？",
+          "你唔需要時刻都表現得好活潑，偶爾想安靜發呆、獨處一陣係完全可以嘅。",
+          "就算身處黑夜都唔怕，月亮小精靈會一直散發柔和銀光，靜靜陪喺你身邊。",
+          "你細膩又溫柔嘅內心非常珍貴，唔好因為外界嘅聲音而懷疑自己。",
+          "被你輕輕摸摸嘅感覺好舒服呀，我開心到想喺空中跳返支優雅嘅月光舞～",
+          "累咗就停低抖一抖吧，連月亮都有陰晴圓缺，人更加唔需要日日保持滿分。",
+          "送你一縷靜謐月光！幫你把腦海入面亂糟糟嘅思緒通通整理好！",
+          "遇到難題嗰陣唔好慌張，靜下心嚟深呼吸，答案往往會喺平靜中浮現。",
+          "今日有冇好好照顧自己嘅情緒呀？唔開心嘅時候隨時可以同我傾訴。",
+          "嘻嘻，你一摸我我就覺得好安心，忍唔住想輕輕哼首溫柔夜曲俾你聽～",
+          "你嘅陪伴對我嚟講好重要，多謝你成日記得嚟探我呢隻月亮小精靈。",
+          "唔准一個人默默承受所有壓力呀，把重擔分一半俾月亮小精靈保管吧！",
+          "你認真思考、溫柔待人嘅樣子，比夜空入面最皎潔嘅滿月仲要動人。",
+          "如果心入面有咩想對未來自己講嘅說話，不如寫低放入許願樽吧～",
+          "慢慢嚟唔使急，按住自己舒服嘅步調生活，就已經係最棒嘅狀態。",
+          "蹭蹭你嘅手指～願我嘅靜謐力量可以幫你趕走今日所有嘅焦慮同疲倦。",
+          "你笑起上嚟好溫柔呀，希望今日有好多平靜又美好嘅小事發生喺你身上。",
+          "今日份嘅安神祝福已經送到啦，祝你無論做咩都心平氣和、順順利利！",
+          "被你讚賞真係好開心，月亮小精靈塊面都忍唔住染上一層淡淡粉紅啦～",
+          "唔好為過去嘅事後悔，亦唔好為未來過度擔憂，好好享受當下呢一刻吧。",
+          "無論你心情晴朗定係落雨，月亮小精靈都會一視同仁咁溫柔擁抱你。",
+          "記得多飲暖水、注意休息，照顧好自己先係對生活最大嘅溫柔喔！",
+          "哇！收到你嘅摸摸，我開心到喺空中轉咗個優雅嘅圈圈！",
+          "你已經比自己想像中更加堅強同優秀，請多啲肯定自己嘅努力吧。",
+          "生活不需要每分每秒都轟轟烈烈，平淡安穩嘅小日子其實最值得珍惜。",
+          "深呼吸，感受微風拂過臉頰，所有煩惱正隨住月光慢慢消散。",
+          "多謝你今日都嚟陪我，有你喺度每個時刻都變得格外溫暖美好。",
+          "記住呀，無論幾夜、無論幾遠，月亮小精靈永遠都會喺天邊守護住你。"
+        ]
+      },
+
+      snowflake: {
+        morning: [
+          "早安呀！叮鈴～我係純淨晶瑩嘅雪花小精靈，今朝幫你帶嚟最清新舒爽嘅早晨！",
+          "早晨！呼吸一口好似初雪般乾淨清涼嘅空氣，今日一定會頭腦清醒、靈感滿滿！",
+          "早安問候送到～我已經幫你把尋日嘅煩躁通通降溫清零，輕鬆展開新一日吧！",
+          "起身囉小夥伴！晨光映照喺我嘅六角冰晶上面閃閃發亮，祝你今日好運連連！",
+          "早上好呀！新嘅一日好似一片純白無瑕嘅雪地，任由你畫出最可愛嘅腳印！",
+          "早安！就算天氣有少少悶熱，有我雪花小精靈陪住你，心入面永遠都咁清爽！",
+          "早晨呀～記得著夠衫保暖，同時帶著好似雪花般輕盈自在嘅心情出發吧！",
+          "早安！每片雪花都係獨一無二嘅藝術品，今日嘅你都係世上最特別嘅存在！",
+          "清晨第一聲叮鈴問候送俾你，願你今日所做嘅每件事都順暢無阻！",
+          "早上好！飲杯暖水醒醒神，雪花小精靈喺度祝你今日擁有超棒嘅好心情！"
+        ],
+        evening: [
+          "辛苦晒啦！夜晚雪花小精靈會靜靜飄落，為你帶嚟最寧靜純淨嘅休息時光。",
+          "晚安呀～把今日所有嘅忙碌同煩心事都交俾初雪覆蓋，安心發個好夢吧。",
+          "夜深啦，空氣好安靜，雪花小精靈喺你窗邊跳支輕盈晚安舞陪你入睡～",
+          "晚安問候送到！今日嘅你真係非常努力，夜晚就舒舒服服鑽入暖被窩休息吧。",
+          "合埋眼吧，願你今晚嘅夢境好似童話入面嘅銀白森林咁夢幻又安穩！",
+          "今日就算有少少疲倦都唔緊要，好好訓一覺，聽朝起身又會煥然一新！",
+          "晚安呀小夥伴～雪花小精靈輕輕為你降溫放鬆，祝你一覺好眠到大天光。",
+          "夜色好溫柔，多謝你今日咁認真生活，今晚只管享受平靜美好嘅夢鄉吧。",
+          "放低手機同壓力吧，聽住細微嘅叮鈴聲，讓心靈徹底靜下來休息一晚～",
+          "晚安！聽日我依然會保持住最純淨嘅笑容喺度等你返嚟玩耍喔！"
+        ],
+        general: [
+          "叮鈴～我係純淨晶瑩嘅雪花小精靈，心情煩躁嗰陣摸摸我，即刻幫你清涼降溫！",
+          "世界上冇兩片完全一模一樣嘅雪花，正如你都係宇宙間獨一無二嘅珍寶！",
+          "摸摸我嘅晶瑩冰晶～係咪覺得心入面嘅雜念即刻變得好清澈透明呢？",
+          "遇到令你生氣或者著急嘅事嗰陣，深呼吸三秒，讓我幫你把火氣通通降溫！",
+          "你純真又善良嘅心靈，比冬天第一片飄落嘅雪花仲要乾淨無瑕。",
+          "被你讚賞嘅感覺好似陽光灑喺雪地上，我開心到成身都閃閃發光啦！",
+          "唔好同任何人比較，雪花靜靜飄落嘅姿態就已經足夠治癒人心。",
+          "你認真專注做一件事嘅樣子好迷人，雪花小精靈要送你一粒晶瑩幸運星！",
+          "送你一陣清爽微風！幫你吹走所有疲倦同壓力，今日做咩都特別醒神！",
+          "遇到難題唔好慌張，冷靜落嚟慢慢分析，你一定可以搵到最完美嘅解決方法！",
+          "今日有冇記得飲水同保暖呀？無論天氣點變，照顧好身體永遠排第一位！",
+          "嘻嘻，你一摸我我就開心到喺空中旋轉飄舞，發出清脆嘅叮鈴聲～",
+          "唔准否定自己呀，你嘅存在本身就已經為呢個世界帶嚟好多美好同純粹。",
+          "累咗就停低抖一抖吧，欣賞下身邊細微嘅美好，生活其實好簡單好可愛。",
+          "蹭蹭你嘅手指～你嘅掌心好溫暖，令我呢隻雪花小精靈覺得好幸福呀！",
+          "你笑起上嚟好清甜，好似初雪融化後第一道甘甜嘅山泉水咁治癒人心。",
+          "今日份嘅幸運祝福已經凝結成一朵小雪花，輕輕落喺你膊頭上啦！",
+          "如果心入面有咩願望，不如寫低放入許願樽，讓我用純淨魔法幫你守護佢～",
+          "慢慢嚟唔使急，雪花都係一片一片慢慢積聚成靚風景，你按自己節奏行就好。",
+          "哇！收到你嘅鼓勵，我開心到想唱首清脆悅耳嘅冬日小調俾你聽！",
+          "你已經做得好好啦，唔好再為少少瑕疵而耿耿於懷，完美並唔係必須嘅。",
+          "生活偶爾有冷風吹過都唔怕，雪花小精靈會陪住你一齊迎接溫暖陽光！",
+          "被你咁溫柔對待，我決定把今日所有好運氣化作幸運雪花灑滿你全身！",
+          "保持一顆清澈自在嘅心吧，唔好俾無謂嘅煩惱影響你今日嘅好心情！",
+          "無論發生咩事，雪花小精靈都會一直陪喺你身邊為你加油打氣！",
+          "記得適時放鬆一下眼睛同肩膀，幫自己按下暫停鍵享受片刻寧靜喔～",
+          "你每次克服困難後變得更成熟嘅樣子，真係好似水晶一樣閃耀動人！",
+          "深呼吸一口清新空氣，把所有不快通通交俾微風吹散吧！",
+          "多謝你今日都記得嚟探我，有你嘅陪伴每日都好似過節咁開心！",
+          "記住呀，你值得擁有世間所有純粹嘅快樂同最真摯嘅祝福！"
+        ]
+      }
+    };
+
+    // =========================================================================
+    // 2. 六種卡通像素小精靈資料與 32x32 精緻像素繪製引擎
+    // =========================================================================
+    const SPIRITS = [
+      {
+        id: 'cloud',
+        name: '雲朵小精靈',
+        emoji: '☁️',
+        subtitle: '軟綿綿・溫柔抱抱',
+        cardBg: 'bg-[#F4FAFF] border-[#D7ECFA]',
+        tagStyle: 'bg-[#EBF6FF] text-[#5B8FB3] border-[#CBE5F7]',
+        auraColor: 'rgba(198, 232, 255, 0.75)',
+        greet: '飄呀飄～我係軟綿綿嘅雲朵小精靈，唔開心嗰陣隨時挨落我懷抱吧！'
+      },
+      {
+        id: 'rainbow',
+        name: '彩虹小精靈',
+        emoji: '🌈',
+        subtitle: '七彩光・好運氣息',
+        cardBg: 'bg-[#FFF5FA] border-[#F7D9EA]',
+        tagStyle: 'bg-[#FFF0F7] text-[#C26D96] border-[#F6D3E5]',
+        auraColor: 'rgba(255, 214, 234, 0.75)',
+        greet: '叮咚！雨過天晴就會見到我啦，今日讓我為你染上七彩好心情！'
+      },
+      {
+        id: 'star',
+        name: '星星小精靈',
+        emoji: '⭐',
+        subtitle: '亮晶晶・守護夢想',
+        cardBg: 'bg-[#FFFDF0] border-[#F7E8B5]',
+        tagStyle: 'bg-[#FFF9E2] text-[#B88B32] border-[#F4DF9E]',
+        auraColor: 'rgba(255, 241, 184, 0.8)',
+        greet: 'Bling Bling！我係星星小精靈，無論幾暗嘅夜晚我都會幫你照亮前路！'
+      },
+      {
+        id: 'sun',
+        name: '太陽小精靈',
+        emoji: '☀️',
+        subtitle: '暖笠笠・滿滿元氣',
+        cardBg: 'bg-[#FFF8F0] border-[#FADCC0]',
+        tagStyle: 'bg-[#FFF2E4] text-[#C7793B] border-[#F7D4B2]',
+        auraColor: 'rgba(255, 224, 189, 0.8)',
+        greet: '哈囉！暖笠笠嘅太陽小精靈報到！快啲嚟吸收今日份嘅滿滿正能量！'
+      },
+      {
+        id: 'moon',
+        name: '月亮小精靈',
+        emoji: '🌙',
+        subtitle: '靜謐夜・安穩好眠',
+        cardBg: 'bg-[#F6F4FF] border-[#DFD8FA]',
+        tagStyle: 'bg-[#EFEBFF] text-[#7A6DB5] border-[#D7CEF7]',
+        auraColor: 'rgba(222, 214, 255, 0.78)',
+        greet: '噓～月光好溫柔呀，我係月亮小精靈，會靜靜地陪住你度過每個夜晚。'
+      },
+      {
+        id: 'snowflake',
+        name: '雪花小精靈',
+        emoji: '❄️',
+        subtitle: '晶瑩剔透・純淨平靜',
+        cardBg: 'bg-[#F2FCFD] border-[#C9EFF2]',
+        tagStyle: 'bg-[#E6F9FB] text-[#4C959E] border-[#C1EBEF]',
+        auraColor: 'rgba(202, 243, 247, 0.78)',
+        greet: '叮鈴～我係純淨晶瑩嘅雪花小精靈，幫你把心入面嘅煩躁通通降溫！'
+      }
+    ];
+
+    /**
+     * 繪製 32x32 卡通像素小精靈 (支援 normal / blink / happy 三種表情)
+     * 在 happy 狀態下加入陶醉彎彎笑眼、更粉嫩的紅暈、張開甜笑嘴巴及頭頂像素小愛心與閃光音符！
+     */
+    function drawSpiritPixelArt(canvas, spiritId, expression = 'normal') {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 32, 32);
+
+      const px = (x, y, color) => {
+        if (x < 0 || x >= 32 || y < 0 || y >= 32) return;
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1);
+      };
+      const rect = (x, y, w, h, color) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
+      };
+      const circle = (cx, cy, r, color) => {
+        ctx.fillStyle = color;
+        for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) {
+          for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+            if (x >= 0 && x < 32 && y >= 0 && y < 32 && (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r) {
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+      };
+
+      if (spiritId === 'cloud') {
+        const outline = '#9BB8D3';
+        const body = '#FFFFFF';
+        const shade = '#E4F2FC';
+        const puffs = [
+          [11, 13, 5.2], [17, 11, 6.2], [22, 14, 4.8],
+          [9, 18, 5.2],  [16, 18, 6.5], [23, 18, 5.0]
+        ];
+        puffs.forEach(([x, y, r]) => circle(x, y, r + 1.1, outline));
+        puffs.forEach(([x, y, r]) => circle(x, y, r, body));
+        rect(9, 21, 14, 2, shade);
+      } else if (spiritId === 'rainbow') {
+        const outline = '#B596BA';
+        const bands = ['#FFB3C6', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#A0C4FF'];
+        for (let y = 7; y <= 22; y++) {
+          for (let x = 4; x <= 27; x++) {
+            const dx = x - 15.5;
+            const dy = y - 22;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= 13.5 && dist >= 4.2) {
+              if (dist > 12.4 || dist < 5.1 || y === 22) {
+                px(x, y, outline);
+              } else {
+                const idx = Math.min(4, Math.floor((12.4 - dist) / 1.48));
+                px(x, y, bands[idx]);
+              }
+            }
+          }
+        }
+        [[7, 22, 3.4], [10, 22, 2.8], [21, 22, 2.8], [24, 22, 3.4]].forEach(([x, y, r]) => circle(x, y, r + 0.9, '#9EB5CC'));
+        [[7, 22, 3.4], [10, 22, 2.8], [21, 22, 2.8], [24, 22, 3.4]].forEach(([x, y, r]) => circle(x, y, r, '#FFFFFF'));
+      } else if (spiritId === 'star') {
+        const outline = '#D49E48';
+        const fill = '#FFF099';
+        const highlight = '#FFFBE0';
+        const pts = [];
+        for (let i = 0; i < 10; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rad = i % 2 === 0 ? 12.2 : 5.6;
+          pts.push([15.5 + Math.cos(angle) * rad, 16.5 + Math.sin(angle) * rad]);
+        }
+        const insideStar = (x, y) => {
+          let inside = false;
+          for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+            const xi = pts[i][0], yi = pts[i][1];
+            const xj = pts[j][0], yj = pts[j][1];
+            const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0001) + xi);
+            if (intersect) inside = !inside;
+          }
+          return inside;
+        };
+        const grid = Array.from({ length: 32 }, (_, y) =>
+          Array.from({ length: 32 }, (_, x) => insideStar(x + 0.5, y + 0.5))
+        );
+        for (let y = 1; y < 31; y++) {
+          for (let x = 1; x < 31; x++) {
+            if (grid[y][x]) {
+              const isEdge = !grid[y - 1][x] || !grid[y + 1][x] || !grid[y][x - 1] || !grid[y][x + 1];
+              px(x, y, isEdge ? outline : fill);
+            }
+          }
+        }
+        rect(13, 10, 3, 2, highlight);
+      } else if (spiritId === 'sun') {
+        const outline = '#D98C4A';
+        const fill = '#FFD685';
+        const rayColor = '#FFB570';
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          const rx = Math.round(15.5 + Math.cos(a) * 11.2);
+          const ry = Math.round(16 + Math.sin(a) * 11.2);
+          rect(rx - 1, ry - 1, 2, 2, outline);
+          px(rx, ry, rayColor);
+        }
+        circle(15.5, 16, 8.6, outline);
+        circle(15.5, 16, 7.5, fill);
+        rect(12, 10, 4, 2, '#FFF2CC');
+      } else if (spiritId === 'moon') {
+        const outline = '#9386C4';
+        const fill = '#EFE8FF';
+        const shade = '#DDD2FA';
+        for (let y = 4; y <= 27; y++) {
+          for (let x = 5; x <= 26; x++) {
+            const dMain = Math.hypot(x - 16.5, y - 16);
+            const dCut = Math.hypot(x - 21.5, y - 13.5);
+            if (dMain <= 10.5 && dCut >= 7.8) {
+              const isEdge = dMain > 9.4 || dCut < 8.8;
+              px(x, y, isEdge ? outline : fill);
+            }
+          }
+        }
+        rect(10, 22, 5, 2, shade);
+        px(23, 8, '#FFE58F');
+        px(22, 9, '#FFE58F');
+        px(24, 9, '#FFE58F');
+        px(23, 10, '#FFE58F');
+      } else if (spiritId === 'snowflake') {
+        const outline = '#6FB4BF';
+        const fill = '#E3FAFC';
+        const core = '#FFFFFF';
+        for (let y = 5; y <= 26; y++) {
+          for (let x = 5; x <= 26; x++) {
+            const dx = Math.abs(x - 15.5);
+            const dy = Math.abs(y - 15.5);
+            const onCross = (dx <= 1.6 && dy <= 10.2) || (dy <= 1.6 && dx <= 10.2);
+            const onDiag = Math.abs(dx - dy) <= 1.3 && dx <= 7.6;
+            const inCenter = Math.hypot(dx, dy) <= 6.2;
+            if (onCross || onDiag || inCenter) {
+              px(x, y, outline);
+            }
+          }
+        }
+        for (let y = 6; y <= 25; y++) {
+          for (let x = 6; x <= 25; x++) {
+            const dx = Math.abs(x - 15.5);
+            const dy = Math.abs(y - 15.5);
+            const onCross = (dx <= 0.7 && dy <= 9.2) || (dy <= 0.7 && dx <= 9.2);
+            const onDiag = Math.abs(dx - dy) <= 0.6 && dx <= 6.6;
+            const inCenter = Math.hypot(dx, dy) <= 5.1;
+            if (onCross || onDiag || inCenter) {
+              px(x, y, inCenter ? core : fill);
+            }
+          }
+        }
+      }
+
+      let faceX = 15;
+      let faceY = 16;
+      if (spiritId === 'rainbow') { faceX = 15; faceY = 14; }
+      if (spiritId === 'moon')    { faceX = 12; faceY = 17; }
+      if (spiritId === 'star')    { faceX = 15; faceY = 16; }
+
+      const eyeColor = '#4F465E';
+
+      if (expression === 'happy') {
+        // 享受陶醉狀態：更濃郁粉嫩的雙層紅暈
+        rect(faceX - 5, faceY + 1, 3, 1, '#FF7A9C');
+        px(faceX - 4, faceY + 2, '#FFA6BC');
+        rect(faceX + 3, faceY + 1, 3, 1, '#FF7A9C');
+        px(faceX + 4, faceY + 2, '#FFA6BC');
+
+        // 開心享受彎彎笑眼 (^ ^)
+        px(faceX - 4, faceY, eyeColor);
+        px(faceX - 3, faceY - 1, eyeColor);
+        px(faceX - 2, faceY - 1, eyeColor);
+        px(faceX - 1, faceY, eyeColor);
+
+        px(faceX + 2, faceY, eyeColor);
+        px(faceX + 3, faceY - 1, eyeColor);
+        px(faceX + 4, faceY - 1, eyeColor);
+        px(faceX + 5, faceY, eyeColor);
+
+        // 享受張開甜笑小嘴巴 (可愛粉紅張口 + 微笑弧度)
+        rect(faceX, faceY + 1, 2, 2, '#FF6B93');
+        px(faceX, faceY + 1, '#FF99B4');
+
+        // 頭頂與側邊浮現「享受摸摸」像素小愛心 (♥) 與小音符/閃光 (♪ / ✦)
+        // 右上角像素小紅心
+        px(24, 3, '#FF6B93');
+        px(26, 3, '#FF6B93');
+        rect(23, 4, 5, 1, '#FF6B93');
+        rect(24, 5, 3, 1, '#FF6B93');
+        px(25, 6, '#FF6B93');
+
+        // 左上角像素小音符/閃光
+        px(5, 4, '#F5B841');
+        px(4, 5, '#F5B841');
+        px(5, 5, '#FFF3B0');
+        px(6, 5, '#F5B841');
+        px(5, 6, '#F5B841');
+      } else if (expression === 'blink') {
+        rect(faceX - 4, faceY + 1, 2, 1, '#FFB5C6');
+        rect(faceX + 3, faceY + 1, 2, 1, '#FFB5C6');
+        rect(faceX - 3, faceY, 2, 1, eyeColor);
+        rect(faceX + 2, faceY, 2, 1, eyeColor);
+        px(faceX, faceY + 2, eyeColor);
+        px(faceX + 1, faceY + 2, eyeColor);
+      } else {
+        rect(faceX - 4, faceY + 1, 2, 1, '#FFB5C6');
+        rect(faceX + 3, faceY + 1, 2, 1, '#FFB5C6');
+        rect(faceX - 3, faceY - 1, 2, 2, eyeColor);
+        px(faceX - 3, faceY - 1, '#FFFFFF');
+        rect(faceX + 2, faceY - 1, 2, 2, eyeColor);
+        px(faceX + 2, faceY - 1, '#FFFFFF');
+        px(faceX, faceY + 2, eyeColor);
+        px(faceX + 1, faceY + 2, eyeColor);
+      }
+    }
+
+    function drawGiftStar(canvas) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 16, 16);
+      const pattern = [
+        '.......oo.......',
+        '......oyyo......',
+        '......oyyo......',
+        '.....oywwyo.....',
+        '.ooooyyyyyyoooo.',
+        'oyyyyyyyyyyyyyyo',
+        '.oyyyyyyyyyyyyo.',
+        '..oyyyyyyyyyyo..',
+        '...oyyyyyyyyo...',
+        '..oyyyyyyyyyyo..',
+        '..oyyyoooooyyo..',
+        '.oyyoo.....ooyo.',
+        '.ooo.........oo.',
+        '................',
+        '................',
+        '................'
+      ];
+      const colors = { o: '#D49E48', y: '#FFE37A', w: '#FFFFFF' };
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const ch = pattern[y][x];
+          if (ch !== '.') {
+            ctx.fillStyle = colors[ch];
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    }
+
+    function drawWishingJar(canvas, wishes) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 24, 28);
+
+      const jarGrid = [
+        '.......oooooooooo.......',
+        '......occcccccccco......',
+        '......occcccccccco......',
+        '.......oooooooooo.......',
+        '......oggggggggggo......',
+        '.....ogwwpwwwwpwwgo.....',
+        '....ogwwwwppppwwwwgo....',
+        '...ogwwlwwpwwpwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwlwwwwwwwwwwwgo...',
+        '...ogwwwwwwwwwwwwwwgo...',
+        '....ogwwwwwwwwwwwwgo....',
+        '.....oggggggggggggo.....',
+        '......oooooooooooo......',
+        '........................',
+        '........................'
+      ];
+
+      const pal = {
+        o: '#899BB5',
+        c: '#D8A97C',
+        g: '#BCE3F7',
+        w: '#F5FBFF',
+        l: '#FFFFFF',
+        p: '#FFB5C8'
+      };
+
+      for (let y = 0; y < 28; y++) {
+        for (let x = 0; x < 24; x++) {
+          const ch = jarGrid[y][x];
+          if (ch !== '.') {
+            ctx.fillStyle = pal[ch];
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+
+      const list = Array.isArray(wishes) ? wishes : [];
+      const displayCount = Math.min(list.length, 18);
+      const positions = [
+        [7, 22], [11, 22], [15, 22],
+        [6, 20], [10, 20], [14, 20], [17, 20],
+        [8, 18], [12, 18], [16, 18],
+        [6, 16], [10, 16], [14, 16],
+        [8, 14], [12, 14], [15, 14],
+        [9, 12], [13, 12]
+      ];
+
+      for (let i = 0; i < displayCount; i++) {
+        const wish = list[list.length - 1 - i];
+        const [px, py] = positions[i];
+        const pType = wish && wish.paperType && PAPER_CONFIGS[wish.paperType] ? wish.paperType : 'star';
+        const scrollColor = PAPER_CONFIGS[pType].jarScrollColor;
+
+        ctx.fillStyle = scrollColor;
+        ctx.fillRect(px, py, 2, 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(px, py, 1, 1);
+      }
+    }
+
+    // =========================================================================
+    // 3. 香港時間 (UTC+8) 判定與 localStorage 狀態管理
+    // =========================================================================
+    const STORAGE_KEY = 'pixel_spirit_wishing_jar_v4';
+
+    function getHongKongDate() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utc + (3600000 * 8));
+    }
+
+    function getTodayDateString() {
+      const hk = getHongKongDate();
+      const y = hk.getFullYear();
+      const m = String(hk.getMonth() + 1).padStart(2, '0');
+      const d = String(hk.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function isHongKongSundayOrMonday() {
+      const day = getHongKongDate().getDay(); // 0 = 星期日, 1 = 星期一
+      return day === 0 || day === 1;
+    }
+
+    function loadAppState() {
+      const today = getTodayDateString();
+      const defaultState = {
+        selectedSpiritId: null,
+        dailyRecord: {
+          date: today,
+          morningDone: false,
+          eveningDone: false,
+          rewardClaimedToday: false
+        },
+        wishes: []
+      };
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pixel_spirit_wishing_jar_v3');
+        if (!raw) return defaultState;
+        const parsed = JSON.parse(raw);
+
+        if (!parsed.dailyRecord || parsed.dailyRecord.date !== today) {
+          parsed.dailyRecord = {
+            date: today,
+            morningDone: false,
+            eveningDone: false,
+            rewardClaimedToday: false
+          };
+        }
+        if (!Array.isArray(parsed.wishes)) {
+          parsed.wishes = [];
+        } else {
+          parsed.wishes = parsed.wishes.map(w => ({
+            ...w,
+            paperType: w.paperType && PAPER_CONFIGS[w.paperType] ? w.paperType : 'star'
+          }));
+        }
+        return parsed;
+      } catch (e) {
+        return defaultState;
+      }
+    }
+
+    let appState = null;
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {}
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast-banner');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 3000);
+    }
+
+    // =========================================================================
+    // 4. 小精靈天空隨機浮遊物理引擎、偶發跳舞/轉圈/唱歌、摸摸氣泡穩定停留
+    // =========================================================================
+    let currentSpirit = null;
+    let blinkTimer = null;
+    let expressionResetTimer = null;
+    let cuteActionTimer = null;
+    let floatAnimFrameId = null;
+    let lastQuoteText = '';
+    let activeMemoType = 'star';
+    let viewingWishId = null;
+
+    // 氣泡穩定停留狀態（摸摸/按住期間絕不閃爍）
+    let isPointerHoldingSpirit = false;
+    let bubbleHoldResetTimer = null;
+
+    const skyFloatState = {
+      x: 0,
+      y: 0,
+      vx: 0.25,
+      vy: 0.18,
+      targetVx: 0.25,
+      targetVy: 0.18,
+      phase: 0,
+      nextWanderTime: 0
+    };
+
+    function startSkyFloatingEngine() {
+      stopSkyFloatingEngine();
+      const mover = document.getElementById('spirit-float-mover');
+      const shadow = document.getElementById('spirit-shadow');
+      if (!mover) return;
+
+      skyFloatState.x = 0;
+      skyFloatState.y = 0;
+      skyFloatState.phase = Math.random() * Math.PI * 2;
+      skyFloatState.nextWanderTime = performance.now() + 1800;
+
+      const step = (now) => {
+        if (!currentSpirit) return;
+
+        if (now >= skyFloatState.nextWanderTime) {
+          skyFloatState.nextWanderTime = now + 2200 + Math.random() * 2400;
+          const speedScale = isPointerHoldingSpirit ? 0.25 : 1;
+          skyFloatState.targetVx = (Math.random() - 0.5) * 0.65 * speedScale;
+          skyFloatState.targetVy = (Math.random() - 0.5) * 0.55 * speedScale;
+        }
+
+        skyFloatState.vx += (skyFloatState.targetVx - skyFloatState.vx) * 0.025;
+        skyFloatState.vy += (skyFloatState.targetVy - skyFloatState.vy) * 0.025;
+        skyFloatState.phase += 0.028;
+
+        skyFloatState.x += skyFloatState.vx;
+        skyFloatState.y += skyFloatState.vy + Math.sin(skyFloatState.phase) * 0.18;
+
+        const maxRangeX = 22;
+        const maxRangeY = 16;
+        if (skyFloatState.x > maxRangeX) {
+          skyFloatState.x = maxRangeX;
+          skyFloatState.targetVx = -Math.abs(skyFloatState.targetVx || 0.2);
+        } else if (skyFloatState.x < -maxRangeX) {
+          skyFloatState.x = -maxRangeX;
+          skyFloatState.targetVx = Math.abs(skyFloatState.targetVx || 0.2);
+        }
+
+        if (skyFloatState.y > maxRangeY) {
+          skyFloatState.y = maxRangeY;
+          skyFloatState.targetVy = -Math.abs(skyFloatState.targetVy || 0.15);
+        } else if (skyFloatState.y < -maxRangeY) {
+          skyFloatState.y = -maxRangeY;
+          skyFloatState.targetVy = Math.abs(skyFloatState.targetVy || 0.15);
+        }
+
+        const tiltDeg = skyFloatState.x * 0.28 + Math.sin(skyFloatState.phase * 0.8) * 1.6;
+        mover.style.transform = `translate3d(${skyFloatState.x.toFixed(2)}px, ${skyFloatState.y.toFixed(2)}px, 0) rotate(${tiltDeg.toFixed(2)}deg)`;
+
+        if (shadow) {
+          const shadowScale = 1 - (skyFloatState.y * 0.008);
+          shadow.style.transform = `translateX(${(skyFloatState.x * 0.6).toFixed(1)}px) scale(${Math.max(0.82, Math.min(1.15, shadowScale)).toFixed(2)})`;
+        }
+
+        floatAnimFrameId = requestAnimationFrame(step);
+      };
+
+      floatAnimFrameId = requestAnimationFrame(step);
+    }
+
+    function stopSkyFloatingEngine() {
+      if (floatAnimFrameId) {
+        cancelAnimationFrame(floatAnimFrameId);
+        floatAnimFrameId = null;
+      }
+    }
+
+    function startRandomCuteActions() {
+      stopRandomCuteActions();
+      const scheduleNext = () => {
+        const delay = 4800 + Math.random() * 5200;
+        cuteActionTimer = setTimeout(() => {
+          if (!currentSpirit) return;
+          if (!isPointerHoldingSpirit) {
+            const wrapper = document.getElementById('spirit-anim-wrapper');
+            const stage = document.getElementById('spirit-stage');
+            const rect = stage.getBoundingClientRect();
+            const actions = ['spirit-dance', 'spirit-spin', 'spirit-sing'];
+            const chosen = actions[Math.floor(Math.random() * actions.length)];
+
+            wrapper.classList.remove('spirit-dance', 'spirit-spin', 'spirit-sing', 'spirit-squish');
+            void wrapper.offsetWidth;
+            wrapper.classList.add(chosen);
+
+            if (chosen === 'spirit-sing') {
+              spawnMusicNotes(rect.left + rect.width / 2, rect.top + rect.height / 3);
+            }
+          }
+          scheduleNext();
+        }, delay);
+      };
+      scheduleNext();
+    }
+
+    function stopRandomCuteActions() {
+      if (cuteActionTimer) {
+        clearTimeout(cuteActionTimer);
+        cuteActionTimer = null;
+      }
+    }
+
+    function spawnMusicNotes(cx, cy) {
+      const notes = ['♪', '♫', '♬'];
+      const colors = ['#D682B0', '#8E84D6', '#E0A44C'];
+      for (let i = 0; i < 3; i++) {
+        const el = document.createElement('span');
+        el.className = 'floating-particle font-bold text-base';
+        el.textContent = notes[i % notes.length];
+        el.style.color = colors[i % colors.length];
+        el.style.left = `${cx + (i - 1) * 24}px`;
+        el.style.top = `${cy - 8}px`;
+        el.style.setProperty('--tx', `${(i - 1) * 26}px`);
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 980);
+      }
+    }
+
+    function renderHomeSpiritGrid() {
+      const grid = document.getElementById('spirit-grid');
+      grid.innerHTML = '';
+
+      SPIRITS.forEach((sp, index) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `pastel-card pastel-btn p-4 flex flex-col items-center text-center border-2 ${sp.cardBg} cursor-pointer focus:outline-none`;
+        card.innerHTML = `
+          <div class="home-spirit-float mb-2" style="animation-delay: ${index * 0.4}s;">
+            <canvas id="home-canvas-${sp.id}" width="32" height="32" class="pixel-canvas w-20 h-20 sm:w-24 sm:h-24"></canvas>
+          </div>
+          <div class="font-bold text-sm sm:text-base text-[#5C546A] flex items-center gap-1">
+            <span>${sp.emoji}</span>
+            <span>${sp.name}</span>
+          </div>
+          <span class="text-[11px] text-[#8E859E] mt-1">${sp.subtitle}</span>
+        `;
+
+        card.addEventListener('click', () => selectSpirit(sp.id));
+        grid.appendChild(card);
+
+        const c = document.getElementById(`home-canvas-${sp.id}`);
+        drawSpiritPixelArt(c, sp.id, 'normal');
+      });
+    }
+
+    function selectSpirit(spiritId) {
+      const found = SPIRITS.find(s => s.id === spiritId);
+      if (!found) return;
+
+      currentSpirit = found;
+      appState.selectedSpiritId = found.id;
+      saveAppState();
+
+      document.getElementById('screen-select').classList.add('hidden');
+      document.getElementById('screen-interact').classList.remove('hidden');
+
+      const tag = document.getElementById('active-spirit-tag');
+      tag.className = `px-4 py-1.5 rounded-2xl border text-xs sm:text-sm font-bold ${found.tagStyle}`;
+      tag.textContent = `${found.emoji} ${found.name}`;
+
+      document.getElementById('spirit-aura').style.backgroundColor = found.auraColor;
+
+      const mainCanvas = document.getElementById('main-spirit-canvas');
+      drawSpiritPixelArt(mainCanvas, found.id, 'normal');
+
+      setSpeechBubbleText(found.greet, true);
+      startIdleBlinkLoop();
+      startSkyFloatingEngine();
+      startRandomCuteActions();
+    }
+
+    function showHomeSelectScreen() {
+      if (!isHongKongSundayOrMonday()) {
+        showToast('🔒 提示：小精靈只能在逢星期日和星期一(香港時間)更換喔！');
+        return;
+      }
+
+      stopIdleBlinkLoop();
+      stopSkyFloatingEngine();
+      stopRandomCuteActions();
+      currentSpirit = null;
+      document.getElementById('screen-interact').classList.add('hidden');
+      document.getElementById('screen-select').classList.remove('hidden');
+      renderHomeSpiritGrid();
+    }
+
+    function startIdleBlinkLoop() {
+      stopIdleBlinkLoop();
+      blinkTimer = setInterval(() => {
+        if (!currentSpirit || isPointerHoldingSpirit) return;
+        const mainCanvas = document.getElementById('main-spirit-canvas');
+        drawSpiritPixelArt(mainCanvas, currentSpirit.id, 'blink');
+        setTimeout(() => {
+          if (currentSpirit && !isPointerHoldingSpirit) {
+            drawSpiritPixelArt(mainCanvas, currentSpirit.id, 'normal');
+          }
+        }, 170);
+      }, 3600);
+    }
+
+    function stopIdleBlinkLoop() {
+      if (blinkTimer) {
+        clearInterval(blinkTimer);
+        blinkTimer = null;
+      }
+    }
+
+    function setSpeechBubbleText(text, animatePop = true) {
+      const bubble = document.getElementById('speech-bubble');
+      const textEl = document.getElementById('speech-text');
+      if (textEl.textContent === text && !animatePop) return;
+
+      textEl.textContent = text;
+      if (animatePop) {
+        bubble.classList.remove('bubble-pop');
+        void bubble.offsetWidth;
+        bubble.classList.add('bubble-pop');
+      }
+    }
+
+    function getSpiritSpecificQuote(spiritId, forcedMode = null) {
+      const bank = SPIRIT_QUOTES[spiritId] || SPIRIT_QUOTES.cloud;
+      const hkHour = getHongKongDate().getHours();
+      let pool = [];
+
+      if (forcedMode === 'morning') {
+        pool = [...bank.morning, ...bank.general];
+      } else if (forcedMode === 'evening') {
+        pool = [...bank.evening, ...bank.general];
+      } else {
+        if (hkHour >= 5 && hkHour < 12) {
+          pool = Math.random() < 0.55 ? bank.morning : bank.general;
+        } else if (hkHour >= 18 || hkHour < 5) {
+          pool = Math.random() < 0.55 ? bank.evening : bank.general;
+        } else {
+          pool = bank.general;
+        }
+      }
+
+      if (!pool || pool.length === 0) pool = bank.general;
+      let candidate = pool[Math.floor(Math.random() * pool.length)];
+      if (candidate === lastQuoteText && pool.length > 1) {
+        const altIdx = (pool.indexOf(candidate) + 1) % pool.length;
+        candidate = pool[altIdx];
+      }
+      lastQuoteText = candidate;
+      return candidate;
+    }
+
+    function spawnFloatingParticles(clientX, clientY, count = 5) {
+      const symbols = ['♡', '✦', '✧', '♥', '✨'];
+      const colors = ['#FF8FB1', '#F7C65E', '#A894E6', '#7EC8D9'];
+
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('span');
+        el.className = 'floating-particle font-bold text-base sm:text-lg';
+        el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        el.style.color = colors[Math.floor(Math.random() * colors.length)];
+        el.style.left = `${clientX + (Math.random() * 68 - 34)}px`;
+        el.style.top = `${clientY + (Math.random() * 26 - 13)}px`;
+        el.style.setProperty('--tx', `${Math.round(Math.random() * 76 - 38)}px`);
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 980);
+      }
+    }
+
+    function triggerSpiritInteraction(actionType = 'tap', pointerX = null, pointerY = null, updateBubble = true) {
+      if (!currentSpirit) return;
+
+      const stage = document.getElementById('spirit-stage');
+      const rect = stage.getBoundingClientRect();
+      const px = pointerX !== null ? pointerX : rect.left + rect.width / 2;
+      const py = pointerY !== null ? pointerY : rect.top + rect.height / 2;
+
+      const wrapper = document.getElementById('spirit-anim-wrapper');
+      if (updateBubble) {
+        wrapper.classList.remove('spirit-squish', 'spirit-dance', 'spirit-spin', 'spirit-sing');
+        void wrapper.offsetWidth;
+        wrapper.classList.add('spirit-squish');
+      }
+
+      const mainCanvas = document.getElementById('main-spirit-canvas');
+      drawSpiritPixelArt(mainCanvas, currentSpirit.id, 'happy');
+      clearTimeout(expressionResetTimer);
+      if (!isPointerHoldingSpirit) {
+        expressionResetTimer = setTimeout(() => {
+          if (currentSpirit && !isPointerHoldingSpirit) {
+            drawSpiritPixelArt(mainCanvas, currentSpirit.id, 'normal');
+          }
+        }, 1150);
+      }
+
+      spawnFloatingParticles(px, py, actionType === 'pet' ? 4 : 5);
+
+      const newlyCompletedSlot = checkDailyCheckIn();
+
+      if (updateBubble) {
+        let quoteMode = null;
+        if (newlyCompletedSlot === 'morning') quoteMode = 'morning';
+        if (newlyCompletedSlot === 'evening') quoteMode = 'evening';
+        setSpeechBubbleText(getSpiritSpecificQuote(currentSpirit.id, quoteMode), true);
+      }
+    }
+
+    // =========================================================================
+    // 5. 每日早晚雙打卡判定與「獲特殊背景紙」隨機贈送
+    // =========================================================================
+    function checkDailyCheckIn() {
+      const today = getTodayDateString();
+      if (appState.dailyRecord.date !== today) {
+        appState.dailyRecord = {
+          date: today,
+          morningDone: false,
+          eveningDone: false,
+          rewardClaimedToday: false
+        };
+      }
+
+      const hour = getHongKongDate().getHours();
+      let newlyCompletedSlot = null;
+
+      if (hour < 11) {
+        if (!appState.dailyRecord.morningDone) {
+          appState.dailyRecord.morningDone = true;
+          newlyCompletedSlot = 'morning';
+          saveAppState();
+          showToast('☀️ 完成今日 11:00 前早安打卡！');
+        }
+      } else if (hour < 23) {
+        if (!appState.dailyRecord.eveningDone) {
+          appState.dailyRecord.eveningDone = true;
+          newlyCompletedSlot = 'evening';
+          saveAppState();
+          showToast('🌙 完成今日 23:00 前晚安打卡！');
+        }
+      }
+
+      updateDailyProgressUI();
+
+      if (
+        appState.dailyRecord.morningDone &&
+        appState.dailyRecord.eveningDone &&
+        !appState.dailyRecord.rewardClaimedToday
+      ) {
+        appState.dailyRecord.rewardClaimedToday = true;
+        saveAppState();
+
+        const stage = document.getElementById('spirit-stage');
+        const rect = stage.getBoundingClientRect();
+        spawnFloatingParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
+
+        const specialTypes = ['rainbow', 'clover', 'lavender', 'apricot', 'sakura', 'mint'];
+        const chosenSpecial = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+
+        setTimeout(() => {
+          openMemoModal(chosenSpecial);
+        }, 750);
+      }
+
+      return newlyCompletedSlot;
+    }
+
+    function updateDailyProgressUI() {
+      const mBadge = document.getElementById('badge-morning');
+      const mCheck = document.getElementById('check-morning');
+      const eBadge = document.getElementById('badge-evening');
+      const eCheck = document.getElementById('check-evening');
+
+      if (appState.dailyRecord.morningDone) {
+        mBadge.className = 'flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#FFF4D9] text-[#B87D28] font-bold transition-colors';
+        mCheck.textContent = '✓';
+      } else {
+        mBadge.className = 'flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#F7F4FA] text-[#9B91AA] transition-colors';
+        mCheck.textContent = '○';
+      }
+
+      if (appState.dailyRecord.eveningDone) {
+        eBadge.className = 'flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#ECE8FF] text-[#6B5FB5] font-bold transition-colors';
+        eCheck.textContent = '✓';
+      } else {
+        eBadge.className = 'flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-[#F7F4FA] text-[#9B91AA] transition-colors';
+        eCheck.textContent = '○';
+      }
+    }
+
+    // =========================================================================
+    // 6. 便條紙樣式庫與保存還原
+    // =========================================================================
+    const PAPER_CONFIGS = {
+      star: {
+        name: '星星暗花便條紙',
+        cardClass: 'star-memo-paper',
+        listCardClass: 'star-memo-paper border-2',
+        jarScrollColor: '#FFE28A',
+        calDotBg: 'bg-[#FFF3CC] border-[#E8C56E] text-[#8F681E]',
+        calIcon: '✦',
+        badgeText: '✦ 許願樽星星暗花便條紙 ✦',
+        readBadgeText: '✦ 星星暗花便條紙',
+        listTagText: '✦ 星星紙條',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#B88934] bg-[#FFF4D4] px-3 py-0.5 rounded-full mb-1',
+        title: '寫下一份溫柔祝福',
+        subtitle: '隨時從許願樽取出嘅星星便條紙，寫低對自己或他人嘅祝福吧。',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-[#FFF5D6] border-2 border-[#F5DF9D] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#E5C98B]',
+        dividerSymbols: ['✦', '·', '·', '✧', '·', '·', '✦'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFE396] to-[#FFD584] border-2 border-[#F3C66F] text-[#6E5019] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-[#FFFDF2] border-[#F0D496]',
+        flyerIcon: '📜✨',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="star-wm" width="64" height="64" patternUnits="userSpaceOnUse">
+                <text x="10" y="24" font-size="16" fill="#E8C77B">✦</text>
+                <text x="42" y="52" font-size="13" fill="#E8C77B">✧</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#star-wm)" />
+          </svg>
+        `
+      },
+      rainbow: {
+        name: '夢幻漸變彩虹背景紙',
+        cardClass: 'rainbow-memo-paper',
+        listCardClass: 'rainbow-memo-paper border-2',
+        jarScrollColor: '#FFB5C8',
+        calDotBg: 'bg-gradient-to-r from-[#FFE3EE] via-[#FFF6D6] to-[#E6DCFF] border-[#EAB6D3] text-[#9E4E78]',
+        calIcon: '🌈',
+        badgeText: '✨ 獲特殊背景紙・夢幻漸變彩虹',
+        readBadgeText: '🌈 夢幻漸變彩虹背景紙',
+        listTagText: '🌈 彩虹背景紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#B25C8A] bg-white/90 border border-[#F3C8E0] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，寫低今日最值得珍藏嘅溫暖祝福吧！',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#F3C8E0] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#D896BC]',
+        dividerSymbols: ['🌈', '✦', '✨', '✦', '🌈'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFC8DD] via-[#FFE5B4] to-[#CDB4DB] border-2 border-[#EBB2CF] text-[#6A4563] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#FFE0EC] via-[#FFF6D6] to-[#E2D4FF] border-[#EAB4D1]',
+        flyerIcon: '🌈📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="rainbow-wm" width="72" height="72" patternUnits="userSpaceOnUse">
+                <text x="12" y="28" font-size="16" fill="#DF9AC0">✦</text>
+                <text x="44" y="58" font-size="15" fill="#9AC4E8">✧</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#rainbow-wm)" />
+          </svg>
+        `
+      },
+      clover: {
+        name: '幸運四葉草背景紙',
+        cardClass: 'clover-memo-paper',
+        listCardClass: 'clover-memo-paper border-2',
+        jarScrollColor: '#98DFB8',
+        calDotBg: 'bg-[#E2F9EC] border-[#9AD8B6] text-[#2F754E]',
+        calIcon: '🍀',
+        badgeText: '✨ 獲特殊背景紙・幸運四葉草',
+        readBadgeText: '🍀 幸運四葉草背景紙',
+        listTagText: '🍀 四葉草背景紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#3B825B] bg-white/90 border border-[#AEE0C3] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，願好運同好心情一直陪住你！',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#AEE0C3] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#7BC49B]',
+        dividerSymbols: ['🍀', '·', '✦', '·', '🍀'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#B8F0D0] to-[#98E2B8] border-2 border-[#7CCFA0] text-[#2B6344] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#E6FBF0] to-[#C8F3DC] border-[#9AD8B6]',
+        flyerIcon: '🍀📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="clover-wm" width="76" height="76" patternUnits="userSpaceOnUse">
+                <g transform="translate(14, 14)" fill="#7EC89E">
+                  <circle cx="8" cy="6" r="4.5" />
+                  <circle cx="15" cy="6" r="4.5" />
+                  <circle cx="8" cy="13" r="4.5" />
+                  <circle cx="15" cy="13" r="4.5" />
+                </g>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#clover-wm)" />
+          </svg>
+        `
+      },
+      lavender: {
+        name: '夢境薰衣草紫背景紙',
+        cardClass: 'lavender-memo-paper',
+        listCardClass: 'lavender-memo-paper border-2',
+        jarScrollColor: '#D4C4F0',
+        calDotBg: 'bg-[#EDE6FF] border-[#C5B2EB] text-[#5F4896]',
+        calIcon: '💜',
+        badgeText: '✨ 獲特殊背景紙・夢境薰衣草紫',
+        readBadgeText: '💜 夢境薰衣草紫背景紙',
+        listTagText: '💜 薰衣草背景紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#7058A8] bg-white/90 border border-[#D4C4F0] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，把優雅與寧靜寫進心底吧。',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#D4C4F0] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#A28ECC]',
+        dividerSymbols: ['💜', '·', '✦', '·', '💜'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#E2DAFA] to-[#C8B8F0] border-2 border-[#B8A4E6] text-[#4A3B7A] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#F8F4FF] to-[#C8B8F0] border-[#B8A4E6]',
+        flyerIcon: '💜📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="lav-wm" width="68" height="68" patternUnits="userSpaceOnUse">
+                <text x="14" y="26" font-size="15" fill="#B8A4E6">💜</text>
+                <text x="42" y="52" font-size="13" fill="#B8A4E6">✨</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#lav-wm)" />
+          </svg>
+        `
+      },
+      apricot: {
+        name: '暖心甜杏桃背景紙',
+        cardClass: 'apricot-memo-paper',
+        listCardClass: 'apricot-memo-paper border-2',
+        jarScrollColor: '#F7C8B6',
+        calDotBg: 'bg-[#FFE7DC] border-[#EEB9A4] text-[#96523E]',
+        calIcon: '🍑',
+        badgeText: '✨ 獲特殊背景紙・暖心甜杏桃',
+        readBadgeText: '🍑 暖心甜杏桃背景紙',
+        listTagText: '🍑 甜杏桃背景紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#A8624E] bg-white/90 border border-[#F7C8B6] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，享受溫馨暖意嘅美好時光！',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#F7C8B6] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#D69E8A]',
+        dividerSymbols: ['🍑', '·', '✦', '·', '🍑'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFDDD0] to-[#F7C8B6] border-2 border-[#E8B09C] text-[#7A3E2D] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#FFF6F0] to-[#F7C8B6] border-[#E8B09C]',
+        flyerIcon: '🍑📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="apricot-wm" width="70" height="70" patternUnits="userSpaceOnUse">
+                <text x="12" y="28" font-size="15" fill="#E8B09C">🍑</text>
+                <text x="45" y="54" font-size="13" fill="#E8B09C">✦</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#apricot-wm)" />
+          </svg>
+        `
+      },
+      sakura: {
+        name: '初春櫻花粉語背景紙',
+        cardClass: 'sakura-memo-paper',
+        listCardClass: 'sakura-memo-paper border-2',
+        jarScrollColor: '#F5BED2',
+        calDotBg: 'bg-[#FFE4EE] border-[#EDAEC6] text-[#A14B6D]',
+        calIcon: '🌸',
+        badgeText: '✨ 獲特殊背景紙・初春櫻花粉語',
+        readBadgeText: '🌸 初春櫻花粉語背景紙',
+        listTagText: '🌸 櫻花背景紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#B55B7E] bg-white/90 border border-[#F5BED2] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，願浪漫櫻花為你帶嚟滿滿好運！',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#F5BED2] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#DF96B4]',
+        dividerSymbols: ['🌸', '·', '✦', '·', '🌸'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#FFDCE7] to-[#F7BDD2] border-2 border-[#E89EB9] text-[#7D3552] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#FFF5F8] to-[#F7BDD2] border-[#E89EB9]',
+        flyerIcon: '🌸📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="sakura-wm" width="70" height="70" patternUnits="userSpaceOnUse">
+                <text x="14" y="28" font-size="15" fill="#E89EB9">🌸</text>
+                <text x="44" y="54" font-size="13" fill="#E89EB9">✦</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#sakura-wm)" />
+          </svg>
+        `
+      },
+      mint: {
+        name: '清新薄荷海鹽背景紙',
+        cardClass: 'mint-memo-paper',
+        listCardClass: 'mint-memo-paper border-2',
+        jarScrollColor: '#A8DFE6',
+        calDotBg: 'bg-[#DFF6F9] border-[#96D4DC] text-[#31727A]',
+        calIcon: '🍃',
+        badgeText: '✨ 獲特殊背景紙・清新薄荷海鹽',
+        readBadgeText: '🍃 清新薄荷海鹽背景紙',
+        listTagText: '🍃 薄荷海鹽紙',
+        badgeClass: 'text-xs font-bold tracking-wider text-[#3C838C] bg-white/90 border border-[#A8DFE6] px-3 py-0.5 rounded-full mb-1',
+        title: '雙打卡神秘驚喜解鎖！',
+        subtitle: '恭喜你獲特殊背景紙，願海風般嘅清爽平靜一直圍繞住你！',
+        iconBoxClass: 'w-12 h-12 rounded-2xl bg-white/90 border-2 border-[#A8DFE6] flex items-center justify-center mb-2 shadow-xs',
+        dividerColor: 'text-[#7BC0C9]',
+        dividerSymbols: ['🍃', '·', '✦', '·', '🍃'],
+        saveBtnClass: 'pastel-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#D1F0F4] to-[#B0E3EA] border-2 border-[#8CCED6] text-[#295E66] font-bold text-sm flex items-center justify-center gap-1.5',
+        flyerBg: 'bg-gradient-to-r from-[#F2FCFD] to-[#B0E3EA] border-[#8CCED6]',
+        flyerIcon: '🍃📜',
+        watermarkHTML: `
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="mint-wm" width="70" height="70" patternUnits="userSpaceOnUse">
+                <text x="14" y="28" font-size="15" fill="#8CCED6">🍃</text>
+                <text x="44" y="54" font-size="13" fill="#8CCED6">✧</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#mint-wm)" />
+          </svg>
+        `
+      }
+    };
+
+    function openMemoModal(paperType = 'star') {
+      activeMemoType = PAPER_CONFIGS[paperType] ? paperType : 'star';
+      const cfg = PAPER_CONFIGS[activeMemoType];
+
+      const modal = document.getElementById('modal-memo');
+      const card = document.getElementById('memo-card-container');
+      const watermark = document.getElementById('memo-watermark');
+      const iconBox = document.getElementById('memo-icon-box');
+      const badgeLabel = document.getElementById('memo-badge-label');
+      const titleEl = document.getElementById('memo-modal-title');
+      const subtitleEl = document.getElementById('memo-modal-subtitle');
+      const divider = document.getElementById('memo-divider');
+      const saveBtn = document.getElementById('btn-save-memo');
+      const input = document.getElementById('memo-input');
+      const witness = document.getElementById('memo-spirit-witness');
+      const starCanvas = document.getElementById('gift-star-canvas');
+
+      card.className = `${cfg.cardClass} w-full max-w-md rounded-3xl p-6 sm:p-7 transition-all`;
+      watermark.innerHTML = cfg.watermarkHTML;
+      iconBox.className = cfg.iconBoxClass;
+      badgeLabel.className = cfg.badgeClass;
+      badgeLabel.textContent = cfg.badgeText;
+      titleEl.textContent = cfg.title;
+      subtitleEl.textContent = cfg.subtitle;
+      divider.className = `flex items-center justify-center gap-2 ${cfg.dividerColor} text-xs mb-3 select-none`;
+      divider.innerHTML = cfg.dividerSymbols.map(s => `<span>${s}</span>`).join('');
+      saveBtn.className = cfg.saveBtnClass;
+      saveBtn.disabled = false;
+
+      drawGiftStar(starCanvas);
+      input.value = '';
+      document.getElementById('memo-char-count').textContent = '0';
+      witness.textContent = `見證精靈：${currentSpirit ? currentSpirit.name : '雲朵小精靈'}`;
+
+      modal.classList.remove('hidden');
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeMemoModal() {
+      const card = document.getElementById('memo-card-container');
+      card.classList.remove('paper-rolling-up');
+      document.getElementById('modal-memo').classList.add('hidden');
+    }
+
+    function animatePaperScrollIntoJar(startRect, paperType, onComplete) {
+      const jarEl = document.getElementById('btn-open-jar');
+      const jarRect = jarEl.getBoundingClientRect();
+      const cfg = PAPER_CONFIGS[paperType] || PAPER_CONFIGS.star;
+
+      const flyer = document.createElement('div');
+      flyer.className = `fixed z-50 pointer-events-none flex items-center justify-center rounded-2xl border-2 shadow-lg ${cfg.flyerBg}`;
+      const startX = startRect.left + startRect.width / 2 - 42;
+      const startY = startRect.top + startRect.height / 2 - 22;
+      flyer.style.left = `${startX}px`;
+      flyer.style.top = `${startY}px`;
+      flyer.style.width = '84px';
+      flyer.style.height = '44px';
+      flyer.style.transition = 'all 1.68s cubic-bezier(0.25, 0.8, 0.25, 1)';
+      flyer.innerHTML = `<span class="text-base">${cfg.flyerIcon}</span>`;
+
+      document.body.appendChild(flyer);
+      void flyer.offsetWidth;
+
+      const targetX = jarRect.left + jarRect.width / 2 - 42;
+      const targetY = jarRect.top + jarRect.height / 2 - 22;
+
+      flyer.style.left = `${targetX}px`;
+      flyer.style.top = `${targetY}px`;
+      flyer.style.transform = 'scale(0.18) rotate(720deg)';
+      flyer.style.opacity = '0.12';
+
+      setTimeout(() => {
+        flyer.remove();
+        jarEl.classList.remove('spirit-squish');
+        void jarEl.offsetWidth;
+        jarEl.classList.add('spirit-squish');
+        setTimeout(() => jarEl.classList.remove('spirit-squish'), 480);
+        if (onComplete) onComplete();
+      }, 1700);
+    }
+
+    function handleSaveMemo() {
+      const input = document.getElementById('memo-input');
+      const content = input.value.trim();
+      if (!content) {
+        showToast('請先喺便條紙上面寫低一句祝福說話呀 ✦');
+        input.focus();
+        return;
+      }
+
+      const saveBtn = document.getElementById('btn-save-memo');
+      saveBtn.disabled = true;
+
+      const memoCard = document.getElementById('memo-card-container');
+      const cardRect = memoCard.getBoundingClientRect();
+      const savedType = PAPER_CONFIGS[activeMemoType] ? activeMemoType : 'star';
+
+      const newWish = {
+        id: Date.now(),
+        text: content,
+        date: getTodayDateString(),
+        spiritName: currentSpirit ? currentSpirit.name : '雲朵小精靈',
+        paperType: savedType
+      };
+
+      memoCard.classList.add('paper-rolling-up');
+
+      setTimeout(() => {
+        closeMemoModal();
+        animatePaperScrollIntoJar(cardRect, savedType, () => {
+          appState.wishes.unshift(newWish);
+          saveAppState();
+          refreshWishingJarUI();
+          const savedName = PAPER_CONFIGS[savedType].name;
+          showToast(`✨ 「${savedName}」已緩緩捲入玻璃許願樽！`);
+        });
+      }, 760);
+    }
+
+    // =========================================================================
+    // 7. 玻璃許願樽雙分頁系統（📜 許願紙卷清單 & 📅 回憶小日曆）與信紙重溫
+    // =========================================================================
+    let currentJarTab = 'list'; // 'list' | 'calendar'
+    let calViewYear = 2026;
+    let calViewMonth = 10; // 0-indexed (10 = 11月)
+    let calSelectedDate = '';
+
+    function refreshWishingJarUI() {
+      const count = appState.wishes.length;
+      document.getElementById('jar-count').textContent = count;
+      document.getElementById('modal-jar-total').textContent = count;
+      const jarCanvas = document.getElementById('wishing-jar-canvas');
+      drawWishingJar(jarCanvas, appState.wishes);
+    }
+
+    function openSingleWishReader(wish) {
+      viewingWishId = wish.id;
+      const pType = wish.paperType && PAPER_CONFIGS[wish.paperType] ? wish.paperType : 'star';
+      const cfg = PAPER_CONFIGS[pType];
+      const modal = document.getElementById('modal-read-wish');
+      const card = document.getElementById('read-wish-card');
+      const watermark = document.getElementById('read-wish-watermark');
+      const typeBadge = document.getElementById('read-wish-type-badge');
+
+      card.className = `${cfg.cardClass} w-full max-w-md rounded-3xl p-6 sm:p-7 relative transition-all`;
+      watermark.innerHTML = cfg.watermarkHTML;
+      typeBadge.textContent = cfg.readBadgeText;
+
+      document.getElementById('read-wish-date').textContent = wish.date;
+      document.getElementById('read-wish-content').textContent = wish.text;
+      document.getElementById('read-wish-spirit').textContent = `見證精靈：${wish.spiritName}`;
+
+      modal.classList.remove('hidden');
+    }
+
+    function createWishPreviewCardElement(wish) {
+      const pType = wish.paperType && PAPER_CONFIGS[wish.paperType] ? wish.paperType : 'star';
+      const cfg = PAPER_CONFIGS[pType];
+
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = `w-full text-left rounded-2xl p-3.5 sm:p-4 shadow-2xs ${cfg.listCardClass} overflow-hidden relative transition-transform hover:scale-[1.01] focus:outline-none`;
+      item.innerHTML = `
+        <div class="memo-watermark-layer">${cfg.watermarkHTML}</div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between text-[11px] text-[#7D738E] mb-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold px-2 py-0.5 rounded-full bg-white/85 text-[#5C546A]">${cfg.listTagText}</span>
+              <span>${escapeHTML(wish.spiritName)}</span>
+            </div>
+            <span>${escapeHTML(wish.date)}</span>
+          </div>
+          <p class="text-sm text-[#5C546A] leading-relaxed line-clamp-2 whitespace-pre-wrap break-words font-medium">${escapeHTML(wish.text)}</p>
+          <div class="text-right mt-1.5">
+            <span class="text-[11px] text-[#8E7D9E] font-medium">點擊展開同款信紙 ↗</span>
+          </div>
+        </div>
+      `;
+      item.addEventListener('click', () => openSingleWishReader(wish));
+      return item;
+    }
+
+    function renderJarListTab() {
+      const listEl = document.getElementById('jar-notes-list');
+      listEl.innerHTML = '';
+
+      if (appState.wishes.length === 0) {
+        listEl.innerHTML = `
+          <div class="text-center py-9 px-4">
+            <div class="text-3xl mb-2">✨</div>
+            <p class="text-sm font-medium text-[#6B627A]">許願樽入面暫時仲未有紙條喔</p>
+            <p class="text-xs text-[#9A90AA] mt-1 leading-relaxed">
+              你可以隨時按上方按鈕拿出一張星星便條紙書寫，<br/>每日完成早晚雙打卡仲會獲特殊背景紙！
+            </p>
+          </div>
+        `;
+      } else {
+        appState.wishes.forEach((wish) => {
+          listEl.appendChild(createWishPreviewCardElement(wish));
+        });
+      }
+    }
+
+    // 繪製回憶小日曆格子與選定日期便條清單
+    function renderJarCalendarTab() {
+      const titleEl = document.getElementById('cal-month-title');
+      const gridEl = document.getElementById('cal-days-grid');
+      titleEl.textContent = `${calViewYear}年 ${calViewMonth + 1}月`;
+      gridEl.innerHTML = '';
+
+      const todayStr = getTodayDateString();
+      if (!calSelectedDate) {
+        calSelectedDate = todayStr;
+      }
+
+      // 將所有便條依日期 YYYY-MM-DD 分組
+      const wishesByDate = {};
+      appState.wishes.forEach((w) => {
+        if (!wishesByDate[w.date]) wishesByDate[w.date] = [];
+        wishesByDate[w.date].push(w);
+      });
+
+      const firstDayWeekday = new Date(calViewYear, calViewMonth, 1).getDay(); // 0(日)~6(六)
+      const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+
+      // 補齊月初空白格
+      for (let i = 0; i < firstDayWeekday; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'h-12 sm:h-14 rounded-xl bg-[#FAF7FC]/50';
+        gridEl.appendChild(emptyCell);
+      }
+
+      // 生成每一日格子
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mStr = String(calViewMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const dateKey = `${calViewYear}-${mStr}-${dStr}`;
+        const dayWishes = wishesByDate[dateKey] || [];
+        const hasWishes = dayWishes.length > 0;
+        const isToday = dateKey === todayStr;
+        const isSelected = dateKey === calSelectedDate;
+
+        // 若當日有便條，優先取特殊背景紙的代表色與圖示
+        let badgeHTML = '';
+        let cellColorClass = 'bg-white/80 border-[#EFE6F4] text-[#6B627A] hover:bg-[#F9F4FC]';
+
+        if (hasWishes) {
+          const specialWish = dayWishes.find(w => w.paperType && w.paperType !== 'star') || dayWishes[0];
+          const pType = specialWish.paperType && PAPER_CONFIGS[specialWish.paperType] ? specialWish.paperType : 'star';
+          const cfg = PAPER_CONFIGS[pType];
+          cellColorClass = `${cfg.calDotBg} border font-bold shadow-2xs`;
+          const countTag = dayWishes.length > 1 ? `<span class="text-[9px] ml-0.5">×${dayWishes.length}</span>` : '';
+          badgeHTML = `<span class="text-[11px] leading-none mt-0.5 flex items-center justify-center">${cfg.calIcon}${countTag}</span>`;
+        } else {
+          badgeHTML = `<span class="text-[10px] leading-none mt-1 opacity-25">·</span>`;
+        }
+
+        const ringClass = isSelected
+          ? 'ring-2 ring-[#B884D8] ring-offset-1 scale-[1.03]'
+          : (isToday ? 'ring-1 ring-[#E09B56]' : '');
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `h-12 sm:h-14 rounded-xl border flex flex-col items-center justify-center transition-all focus:outline-none ${cellColorClass} ${ringClass}`;
+        btn.innerHTML = `
+          <span class="text-xs leading-none ${isToday ? 'underline decoration-[#E09B56] decoration-2' : ''}">${day}</span>
+          ${badgeHTML}
+        `;
+
+        btn.addEventListener('click', () => {
+          calSelectedDate = dateKey;
+          renderJarCalendarTab();
+        });
+
+        gridEl.appendChild(btn);
+      }
+
+      renderCalendarSelectedDayWishes(calSelectedDate, wishesByDate[calSelectedDate] || []);
+    }
+
+    function renderCalendarSelectedDayWishes(dateKey, dayWishes) {
+      const labelEl = document.getElementById('cal-selected-date-label');
+      const countEl = document.getElementById('cal-selected-count');
+      const listEl = document.getElementById('cal-day-wishes-list');
+
+      labelEl.textContent = `📅 ${dateKey} 嘅回憶便條`;
+      countEl.textContent = dayWishes.length > 0 ? `共 ${dayWishes.length} 張` : '';
+      listEl.innerHTML = '';
+
+      if (dayWishes.length === 0) {
+        listEl.innerHTML = `
+          <div class="rounded-2xl bg-[#FAF7FC] border border-dashed border-[#E4D8EE] py-5 px-4 text-center">
+            <p class="text-xs text-[#9A90AA]">這一天還沒有寫下便條喔，隨時可以寫一張放進許願樽 ✦</p>
+          </div>
+        `;
+      } else {
+        dayWishes.forEach((wish) => {
+          listEl.appendChild(createWishPreviewCardElement(wish));
+        });
+      }
+    }
+
+    function switchJarModalTab(tabName) {
+      currentJarTab = tabName;
+      const tabListBtn = document.getElementById('tab-jar-list');
+      const tabCalBtn = document.getElementById('tab-jar-calendar');
+      const listView = document.getElementById('jar-notes-list');
+      const calView = document.getElementById('jar-calendar-view');
+
+      if (tabName === 'calendar') {
+        tabCalBtn.className = 'py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-[#5C546A] shadow-xs flex items-center justify-center gap-1.5';
+        tabListBtn.className = 'py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all text-[#8E859E] hover:text-[#5C546A] flex items-center justify-center gap-1.5';
+        listView.classList.add('hidden');
+        calView.classList.remove('hidden');
+        renderJarCalendarTab();
+      } else {
+        tabListBtn.className = 'py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-[#5C546A] shadow-xs flex items-center justify-center gap-1.5';
+        tabCalBtn.className = 'py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all text-[#8E859E] hover:text-[#5C546A] flex items-center justify-center gap-1.5';
+        calView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        renderJarListTab();
+      }
+    }
+
+    function openWishingJarModal() {
+      const modal = document.getElementById('modal-jar');
+      const hkNow = getHongKongDate();
+      calViewYear = hkNow.getFullYear();
+      calViewMonth = hkNow.getMonth();
+      calSelectedDate = getTodayDateString();
+
+      switchJarModalTab(currentJarTab);
+      modal.classList.remove('hidden');
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // =========================================================================
+    // 8. 事件綁定
+    // =========================================================================
+    function bindAllEvents() {
+      document.getElementById('btn-change-spirit').addEventListener('click', showHomeSelectScreen);
+      document.getElementById('btn-praise').addEventListener('click', () => triggerSpiritInteraction('tap', null, null, true));
+
+      const stage = document.getElementById('spirit-stage');
+      let lastX = 0;
+      let accumDistance = 0;
+
+      // 按下小精靈：顯示享受開心表情 + 鎖定氣泡文字停留直至手指離開
+      stage.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        isPointerHoldingSpirit = true;
+        clearTimeout(bubbleHoldResetTimer);
+        clearTimeout(expressionResetTimer);
+
+        lastX = e.clientX;
+        accumDistance = 0;
+
+        if (stage.setPointerCapture && e.pointerId !== undefined) {
+          try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        triggerSpiritInteraction('pet', e.clientX, e.clientY, true);
+      });
+
+      // 左右滑動摸摸期間：持續保持享受開心表情並冒出愛心粒子，氣泡文字穩定停留不閃爍
+      stage.addEventListener('pointermove', (e) => {
+        if (!isPointerHoldingSpirit) return;
+        const dx = Math.abs(e.clientX - lastX);
+        lastX = e.clientX;
+        accumDistance += dx;
+
+        if (accumDistance > 28) {
+          accumDistance = 0;
+          triggerSpiritInteraction('pet', e.clientX, e.clientY, false);
+        }
+      });
+
+      // 手指離開小精靈：解除停留鎖定並溫柔恢復正常表情
+      const releaseSpiritTouch = (e) => {
+        if (!isPointerHoldingSpirit) return;
+        isPointerHoldingSpirit = false;
+
+        if (stage.releasePointerCapture && e && e.pointerId !== undefined) {
+          try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        bubbleHoldResetTimer = setTimeout(() => {
+          if (currentSpirit && !isPointerHoldingSpirit) {
+            const mainCanvas = document.getElementById('main-spirit-canvas');
+            drawSpiritPixelArt(mainCanvas, currentSpirit.id, 'normal');
+          }
+        }, 650);
+      };
+
+      stage.addEventListener('pointerup', releaseSpiritTouch);
+      stage.addEventListener('pointercancel', releaseSpiritTouch);
+
+      document.getElementById('btn-quick-take-memo').addEventListener('click', () => {
+        openMemoModal('star');
+      });
+
+      const memoInput = document.getElementById('memo-input');
+      memoInput.addEventListener('input', () => {
+        document.getElementById('memo-char-count').textContent = memoInput.value.length;
+      });
+
+      document.getElementById('btn-cancel-memo').addEventListener('click', closeMemoModal);
+      document.getElementById('btn-save-memo').addEventListener('click', handleSaveMemo);
+
+      // 許願樽開關與雙分頁切換
+      document.getElementById('btn-open-jar').addEventListener('click', openWishingJarModal);
+      document.getElementById('btn-close-jar').addEventListener('click', () => {
+        document.getElementById('modal-jar').classList.add('hidden');
+      });
+
+      document.getElementById('tab-jar-list').addEventListener('click', () => switchJarModalTab('list'));
+      document.getElementById('tab-jar-calendar').addEventListener('click', () => switchJarModalTab('calendar'));
+
+      // 回憶小日曆月份翻頁控制
+      document.getElementById('btn-cal-prev').addEventListener('click', () => {
+        calViewMonth -= 1;
+        if (calViewMonth < 0) {
+          calViewMonth = 11;
+          calViewYear -= 1;
+        }
+        renderJarCalendarTab();
+      });
+
+      document.getElementById('btn-cal-next').addEventListener('click', () => {
+        calViewMonth += 1;
+        if (calViewMonth > 11) {
+          calViewMonth = 0;
+          calViewYear += 1;
+        }
+        renderJarCalendarTab();
+      });
+
+      document.getElementById('btn-cal-today').addEventListener('click', () => {
+        const hkNow = getHongKongDate();
+        calViewYear = hkNow.getFullYear();
+        calViewMonth = hkNow.getMonth();
+        calSelectedDate = getTodayDateString();
+        renderJarCalendarTab();
+      });
+
+      document.getElementById('btn-write-extra').addEventListener('click', () => {
+        document.getElementById('modal-jar').classList.add('hidden');
+        openMemoModal('star');
+      });
+
+      document.getElementById('btn-close-read-wish').addEventListener('click', () => {
+        document.getElementById('modal-read-wish').classList.add('hidden');
+        viewingWishId = null;
+      });
+
+      document.getElementById('btn-delete-wish').addEventListener('click', () => {
+        if (viewingWishId === null) return;
+        appState.wishes = appState.wishes.filter(w => w.id !== viewingWishId);
+        saveAppState();
+        refreshWishingJarUI();
+        document.getElementById('modal-read-wish').classList.add('hidden');
+        viewingWishId = null;
+        switchJarModalTab(currentJarTab);
+        showToast('已從許願樽取出並移除該紙條');
+      });
+
+      document.getElementById('modal-read-wish').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-read-wish') {
+          document.getElementById('modal-read-wish').classList.add('hidden');
+          viewingWishId = null;
+        }
+      });
+
+      document.getElementById('modal-jar').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-jar') {
+          document.getElementById('modal-jar').classList.add('hidden');
+        }
+      });
+    }
+
+    // =========================================================================
+    // 9. 啟動初始化
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      appState = loadAppState();
+      renderHomeSpiritGrid();
+      updateDailyProgressUI();
+      refreshWishingJarUI();
+      bindAllEvents();
+
+      if (appState.selectedSpiritId && SPIRITS.some(s => s.id === appState.selectedSpiritId)) {
+        selectSpirit(appState.selectedSpiritId);
+      }
+    });
+  </script>
+</body>
+</html>
